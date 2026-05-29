@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker\\BudgetAndExpenseTracker.csproj": {}
+    "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker.csproj": {}
   },
   "projects": {
-    "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker\\BudgetAndExpenseTracker.csproj": {
+    "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker\\BudgetAndExpenseTracker.csproj",
+        "projectUniqueName": "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker.csproj",
         "projectName": "BudgetAndExpenseTracker",
-        "projectPath": "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker\\BudgetAndExpenseTracker.csproj",
+        "projectPath": "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker.csproj",
         "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker\\obj\\",
+        "outputPath": "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config"
