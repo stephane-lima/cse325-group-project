@@ -1,5 +1,8 @@
 ﻿@page "/counter"
 @rendermode InteractiveServer
+@attribute [Authorize]
+@* DEMO: This page requires a logged-in user. Visiting it while signed out
+   redirects to /login. Remove this attribute if the page should be public. *@
 
 <PageTitle>Counter</PageTitle>
 
