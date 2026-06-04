@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "uHVX85b64c4=",
+  "dgSpecHash": "cKl58+tAt5w=",
   "success": true,
-  "projectFilePath": "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker.csproj",
+  "projectFilePath": "D:\\XUL\\CES\\PIDDO\\BYUI\\SOFTWARE DEVELOPMENT\\Software Development\\CSE325.002 - .NET Software Development\\GROUP PROJECT REPO\\cse325-group-project\\cse325-group-project\\BudgetAndExpenseTracker.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\user\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.7\\microsoft.aspnetcore.app.internal.assets.10.0.7.nupkg.sha512"
+    "C:\\Users\\Munashe Zimondi\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.8\\microsoft.aspnetcore.app.internal.assets.10.0.8.nupkg.sha512"
   ],
   "logs": []
 }

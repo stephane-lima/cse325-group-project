@@ -103,3 +103,18 @@
         overflow-y: auto;
     }
 }
+
+/* Logout button styled to match the nav links */
+.nav-logout-btn[b-wi2hw7qusy] {
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.nav-user[b-wi2hw7qusy] {
+    color: #d7d7d7;
+    padding-top: 0.5rem;
+    font-size: 0.9rem;
+}

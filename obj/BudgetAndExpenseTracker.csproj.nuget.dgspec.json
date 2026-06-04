@@ -1,25 +1,31 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker.csproj": {}
+    "D:\\XUL\\CES\\PIDDO\\BYUI\\SOFTWARE DEVELOPMENT\\Software Development\\CSE325.002 - .NET Software Development\\GROUP PROJECT REPO\\cse325-group-project\\cse325-group-project\\BudgetAndExpenseTracker.csproj": {}
   },
   "projects": {
-    "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker.csproj": {
+    "D:\\XUL\\CES\\PIDDO\\BYUI\\SOFTWARE DEVELOPMENT\\Software Development\\CSE325.002 - .NET Software Development\\GROUP PROJECT REPO\\cse325-group-project\\cse325-group-project\\BudgetAndExpenseTracker.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker.csproj",
+        "projectUniqueName": "D:\\XUL\\CES\\PIDDO\\BYUI\\SOFTWARE DEVELOPMENT\\Software Development\\CSE325.002 - .NET Software Development\\GROUP PROJECT REPO\\cse325-group-project\\cse325-group-project\\BudgetAndExpenseTracker.csproj",
         "projectName": "BudgetAndExpenseTracker",
-        "projectPath": "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\BudgetAndExpenseTracker.csproj",
-        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\user\\Downloads\\BYU_Pathway\\CSE325 - .NET Software Development\\CSE325 Projects\\cse325-group-project\\obj\\",
+        "projectPath": "D:\\XUL\\CES\\PIDDO\\BYUI\\SOFTWARE DEVELOPMENT\\Software Development\\CSE325.002 - .NET Software Development\\GROUP PROJECT REPO\\cse325-group-project\\cse325-group-project\\BudgetAndExpenseTracker.csproj",
+        "packagesPath": "C:\\Users\\Munashe Zimondi\\.nuget\\packages\\",
+        "outputPath": "D:\\XUL\\CES\\PIDDO\\BYUI\\SOFTWARE DEVELOPMENT\\Software Development\\CSE325.002 - .NET Software Development\\GROUP PROJECT REPO\\cse325-group-project\\cse325-group-project\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Munashe Zimondi\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -47,7 +53,7 @@
             "Microsoft.AspNetCore.App.Internal.Assets": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[10.0.7, )",
+              "version": "[10.0.8, )",
               "autoReferenced": true
             }
           },
@@ -70,7 +76,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
