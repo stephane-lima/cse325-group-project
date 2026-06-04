@@ -1,27 +1,61 @@
-using BudgetAndExpenseTracker.Components;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
+using BudgetAndExpenseTracker.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ==========================================
+// 1. SERVICES REGISTRATION STAGE
+// ==========================================
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents(); 
+
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDatabase")));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Async database generation migration to prevent Blazor dependency routing race conditions
+await System.Threading.Tasks.Task.Run(async () =>
+{
+    using var scope = app.Services.CreateScope();
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+    using var dbContext = await factory.CreateDbContextAsync();
+    await dbContext.Database.EnsureCreatedAsync();
+});
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
 
+app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseAntiforgery();
 
-app.MapStaticAssets();
-app.MapRazorComponents<App>()
+// ==========================================
+// 2. ENDPOINT MAPPING STAGE
+// ==========================================
+// ==========================================
+// 2. ENDPOINT MAPPING & DIAGNOSTICS STAGE
+// ==========================================
+app.MapRazorComponents<BudgetAndExpenseTracker.Components.App>()
     .AddInteractiveServerRenderMode();
+
+// Use the IEndpointRouteBuilder interface on 'app' to scan the final compiled routing graph
+var endpointSources = ((IEndpointRouteBuilder)app).DataSources;
+foreach (var dataSource in endpointSources)
+{
+    foreach (var endpoint in dataSource.Endpoints)
+    {
+        if (endpoint is RouteEndpoint routeEndpoint && routeEndpoint.RoutePattern.RawText == "/")
+        {
+            Console.WriteLine($"[ROUTING DEBUG] Found root endpoint mapped to: {routeEndpoint.DisplayName}");
+        }
+    }
+}
 
 app.Run();

@@ -1,23 +1,29 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<div class="app-shell">
+    @* This calls your NavMenu component file directly *@
+    <NavMenu />
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+    <main class="main-workspace">
+        @* Top Runtime Header block with user initials *@
+        <header class="workspace-header">
+            <div class="header-left">
+                <span class="badge-live">LIVE</span>
+                <span class="header-subtitle">Monitoring spending</span>
+            </div>
+            <div class="header-profile-section">
+                <button class="icon-notification-btn">
+                    🔔<span class="notification-indicator"></span>
+                </button>
+                <div class="profile-divider"></div>
+                <div class="profile-badge">SS</div>
+                <span class="profile-name">Stephanie S.</span>
+            </div>
+        </header>
 
-        <article class="content px-4">
+        @* Dynamic Page Content Canvas injection site *@
+        <div class="content-body">
             @Body
-        </article>
+        </div>
     </main>
-</div>
-
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
 </div>
