@@ -16,11 +16,24 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(); 
 
-// Database Factory Registration
+// Fixed Factory Registration to guarantee matching directory scopes
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("FreshSqliteDatabase")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("FreshSqliteDatabase");
+    
+    // If the connection string is a simple relative path like "Data Source=budget.db", 
+    // force it to resolve explicitly to the absolute folder root directory path
+    if (connectionString != null && connectionString.Contains("budget.db") && !connectionString.Contains(":\\"))
+    {
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string dbPath = System.IO.Path.Combine(baseDir, "budget.db");
+        connectionString = $"Data Source={dbPath}";
+    }
+    
+    options.UseSqlite(connectionString);
+});
 
-// --- FIXED: ADDED AUTHENTICATION SERVICES CORE ---
+// --- AUTHENTICATION ENGINE ---
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -29,20 +42,17 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddCascadingAuthenticationState();
-
-// Register the In-Memory Account Service
 builder.Services.AddScoped<IAccountService, InMemoryAccountService>();
 
 var app = builder.Build();
 
-// Async database generation migration to prevent Blazor dependency routing race conditions
-await System.Threading.Tasks.Task.Run(async () =>
+// --- FORCED SINGLE-POINT DATA ENGINE GENERATION ---
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
-    using var dbContext = await factory.CreateDbContextAsync();
-    await dbContext.Database.EnsureCreatedAsync();
-});
+    using var dbContext = factory.CreateDbContext();
+    dbContext.Database.EnsureCreated();
+}
 
 if (!app.Environment.IsDevelopment())
 {
@@ -54,11 +64,10 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-// Order matters: authentication must run before authorization.
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Logout endpoint: clears the auth cookie and returns to the login page.
+// Logout endpoint
 app.MapPost("/Account/Logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
