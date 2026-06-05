@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using BudgetAndExpenseTracker.Data;
 using BudgetAndExpenseTracker.Components;
+using BudgetAndExpenseTracker.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,9 +16,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(); 
 
-// --- YOUR DATABASE REGISTRATION (PASTED BACK IN) ---
+// Database Factory Registration
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("FreshSqliteDatabase")));
+
+// --- FIXED: ADDED AUTHENTICATION SERVICES CORE ---
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/login";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
+    });
+
+builder.Services.AddCascadingAuthenticationState();
+
+// Register the In-Memory Account Service
+builder.Services.AddScoped<IAccountService, InMemoryAccountService>();
 
 var app = builder.Build();
 
