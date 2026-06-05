@@ -1,55 +1,54 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">BudgetAndExpenseTracker</a>
-    </div>
-</div>
-
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-
-        @* Auth-aware links: show the signed-in user + logout, or a login link. *@
+<div class="sidebar-wrapper">
+    <nav>
         <AuthorizeView>
             <Authorized>
-                <div class="nav-item px-3 nav-user">
-                    <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span>
-                    Hi, @context.User.Identity?.Name
+                <div class="nav-link-item">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <span class="nav-emoji">??</span> Dashboard
+                    </NavLink>
                 </div>
-                <div class="nav-item px-3">
-                    @* Logout is a POST form to protect against CSRF. *@
-                    <form action="Account/Logout" method="post">
+                <div class="nav-link-item">
+                    <NavLink class="nav-link" href="transactions">
+                        <span class="nav-emoji">??</span> Transactions
+                    </NavLink>
+                </div>
+                <div class="nav-link-item">
+                    <NavLink class="nav-link" href="goals">
+                        <span class="nav-emoji">??</span> Goals
+                    </NavLink>
+                </div>
+                <div class="nav-link-item">
+                    <NavLink class="nav-link" href="profile">
+                        <span class="nav-emoji">??</span> Profile
+                    </NavLink>
+                </div>
+                <div class="nav-link-item">
+                    <form action="Account/Logout" method="post" style="display: inline; width: 100%;">
                         <AntiforgeryToken />
-                        <button type="submit" class="nav-link nav-logout-btn">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Log out
+                        <button type="submit" class="nav-link" style="background: none; border: none; text-align: left; width: 100%; cursor: pointer; padding: 0; font: inherit;">
+                            <span class="nav-emoji">??</span> Log out
                         </button>
                     </form>
                 </div>
             </Authorized>
             <NotAuthorized>
-                <div class="nav-item px-3">
+                <div class="nav-link-item">
                     <NavLink class="nav-link" href="login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Log in
+                        <span class="nav-emoji">??</span> Log in
                     </NavLink>
                 </div>
             </NotAuthorized>
         </AuthorizeView>
     </nav>
+    <AuthorizeView>
+        <Authorized>
+            <div class="sidebar-profile">
+                <div class="profile-avatar">?????</div>
+                <div class="profile-info">
+                    <span class="profile-name">@context.User.Identity?.Name</span>
+                    <span class="profile-role">?? Parent</span>
+                </div>
+            </div>
+        </Authorized>
+    </AuthorizeView>
 </div>

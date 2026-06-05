@@ -1,53 +1,43 @@
-using BudgetAndExpenseTracker.Components;
-using BudgetAndExpenseTracker.Services;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server;
+using BudgetAndExpenseTracker.Data;
+using BudgetAndExpenseTracker.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ==========================================
+// 1. SERVICES REGISTRATION STAGE
+// ==========================================
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents(); 
 
-// --- Authentication & authorization ----------------------------------------
-// Cascading auth state lets components (e.g. AuthorizeView in the nav) read the
-// signed-in user, and AddAuthorization enables the [Authorize] attribute.
-builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddAuthorization();
-
-// Bridges the signed-in user from the cookie (HttpContext.User) into Blazor's
-// authentication state so AuthorizeView/[Authorize] work in components.
-builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
-
-// Cookie-based authentication. The login page writes this cookie on success and
-// unauthorized requests are redirected to /login.
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/login";
-        options.AccessDeniedPath = "/login";
-        options.ExpireTimeSpan = TimeSpan.FromHours(8);
-        options.SlidingExpiration = true;
-    });
-
-// Account store. Registered as a singleton (in-memory) for now; swap this single
-// line for an EF Core Identity-backed implementation once the database is ready.
-builder.Services.AddSingleton<IAccountService, InMemoryAccountService>();
+// --- YOUR DATABASE REGISTRATION (PASTED BACK IN) ---
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("FreshSqliteDatabase")));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Async database generation migration to prevent Blazor dependency routing race conditions
+await System.Threading.Tasks.Task.Run(async () =>
+{
+    using var scope = app.Services.CreateScope();
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+    using var dbContext = await factory.CreateDbContextAsync();
+    await dbContext.Database.EnsureCreatedAsync();
+});
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
 
+app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseAntiforgery();
 
 // Order matters: authentication must run before authorization.
@@ -61,8 +51,23 @@ app.MapPost("/Account/Logout", async (HttpContext context) =>
     return Results.Redirect("/login");
 });
 
-app.MapStaticAssets();
-app.MapRazorComponents<App>()
+// ==========================================
+// 2. ENDPOINT MAPPING & DIAGNOSTICS STAGE
+// ==========================================
+app.MapRazorComponents<BudgetAndExpenseTracker.Components.App>()
     .AddInteractiveServerRenderMode();
+
+// Use the IEndpointRouteBuilder interface on 'app' to scan the final compiled routing graph
+var endpointSources = ((IEndpointRouteBuilder)app).DataSources;
+foreach (var dataSource in endpointSources)
+{
+    foreach (var endpoint in dataSource.Endpoints)
+    {
+        if (endpoint is RouteEndpoint routeEndpoint && routeEndpoint.RoutePattern.RawText == "/")
+        {
+            Console.WriteLine($"[ROUTING DEBUG] Found root endpoint mapped to: {routeEndpoint.DisplayName}");
+        }
+    }
+}
 
 app.Run();
