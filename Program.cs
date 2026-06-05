@@ -16,24 +16,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(); 
 
-// Fixed Factory Registration to guarantee matching directory scopes
+// Register DbContextFactory pointing to the matching "SqliteDatabase" key
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("FreshSqliteDatabase");
+    // Match the exact name defined inside your appsettings.json
+    var connectionString = builder.Configuration.GetConnectionString("SqliteDatabase");
     
-    // If the connection string is a simple relative path like "Data Source=budget.db", 
-    // force it to resolve explicitly to the absolute folder root directory path
-    if (connectionString != null && connectionString.Contains("budget.db") && !connectionString.Contains(":\\"))
+    if (string.IsNullOrEmpty(connectionString))
     {
-        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        string dbPath = System.IO.Path.Combine(baseDir, "budget.db");
-        connectionString = $"Data Source={dbPath}";
+        throw new InvalidOperationException("Connection string 'SqliteDatabase' was not found in configuration files.");
     }
     
     options.UseSqlite(connectionString);
 });
 
-// --- AUTHENTICATION ENGINE ---
+// Authentication Engine
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -46,7 +43,7 @@ builder.Services.AddScoped<IAccountService, InMemoryAccountService>();
 
 var app = builder.Build();
 
-// --- FORCED SINGLE-POINT DATA ENGINE GENERATION ---
+// Core DB Generation hook using the corrected layout registration
 using (var scope = app.Services.CreateScope())
 {
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
@@ -67,7 +64,6 @@ app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Logout endpoint
 app.MapPost("/Account/Logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -80,7 +76,6 @@ app.MapPost("/Account/Logout", async (HttpContext context) =>
 app.MapRazorComponents<BudgetAndExpenseTracker.Components.App>()
     .AddInteractiveServerRenderMode();
 
-// Use the IEndpointRouteBuilder interface on 'app' to scan the final compiled routing graph
 var endpointSources = ((IEndpointRouteBuilder)app).DataSources;
 foreach (var dataSource in endpointSources)
 {
