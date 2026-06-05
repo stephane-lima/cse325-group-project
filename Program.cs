@@ -2,7 +2,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using BudgetAndExpenseTracker.Data;
+using BudgetAndExpenseTracker.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,8 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(); 
 
+// --- YOUR DATABASE REGISTRATION (PASTED BACK IN) ---
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDatabase")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("FreshSqliteDatabase")));
 
 var app = builder.Build();
 
@@ -36,9 +40,17 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-// ==========================================
-// 2. ENDPOINT MAPPING STAGE
-// ==========================================
+// Order matters: authentication must run before authorization.
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Logout endpoint: clears the auth cookie and returns to the login page.
+app.MapPost("/Account/Logout", async (HttpContext context) =>
+{
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.Redirect("/login");
+});
+
 // ==========================================
 // 2. ENDPOINT MAPPING & DIAGNOSTICS STAGE
 // ==========================================

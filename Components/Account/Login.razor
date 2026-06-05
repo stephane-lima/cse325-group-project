@@ -1,0 +1,120 @@
+@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using BudgetAndExpenseTracker.Services
+@inject IAccountService AccountService
+@inject NavigationManager Navigation
+
+@*
+    Login page for the Budget & Expense Tracker.
+    Rendered statically (no @rendermode) on purpose: a static server-rendered form
+    runs inside the HTTP request pipeline, so we can write the authentication cookie
+    via HttpContext.SignInAsync before the response is sent. After signing in we
+    redirect with NavigationManager, which issues an HTTP redirect in static SSR.
+*@
+
+<PageTitle>Log in</PageTitle>
+
+<section class="auth-page">
+    <div class="auth-card">
+        <header class="auth-card__header">
+            <h1 class="auth-card__title">Welcome back</h1>
+            <p class="auth-card__subtitle">Log in to manage your budget and expenses.</p>
+        </header>
+
+        @* Error banner — uses role="alert" so screen readers announce it. *@
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="auth-alert" role="alert">@_errorMessage</div>
+        }
+
+        <EditForm Model="Input" method="post" OnValidSubmit="LogInAsync" FormName="login" novalidate>
+            <DataAnnotationsValidator />
+
+            <div class="auth-field">
+                <label for="email" class="auth-label">Email</label>
+                <InputText id="email" class="auth-input" @bind-Value="Input.Email"
+                           autocomplete="username" aria-required="true" placeholder="you@example.com" />
+                <ValidationMessage For="() => Input.Email" class="auth-validation" />
+            </div>
+
+            <div class="auth-field">
+                <label for="password" class="auth-label">Password</label>
+                <InputText id="password" type="password" class="auth-input" @bind-Value="Input.Password"
+                           autocomplete="current-password" aria-required="true" placeholder="Enter your password" />
+                <ValidationMessage For="() => Input.Password" class="auth-validation" />
+            </div>
+
+            <div class="auth-field auth-field--checkbox">
+                <InputCheckbox id="remember" class="auth-checkbox" @bind-Value="Input.RememberMe" />
+                <label for="remember" class="auth-label auth-label--inline">Keep me signed in</label>
+            </div>
+
+            <button type="submit" class="auth-button">Log in</button>
+        </EditForm>
+
+        <p class="auth-switch">
+            Don't have an account? <a href="register">Create one</a>
+        </p>
+
+        <p class="auth-demo">
+            Demo login: <strong>demo@budgettracker.com</strong> / <strong>Password123!</strong>
+        </p>
+    </div>
+</section>
+
+@code {
+    // The HttpContext is supplied as a cascading parameter during static server rendering.
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    // Bind the posted form fields to this model.
+    [SupplyParameterFromForm]
+    private LoginInput Input { get; set; } = new();
+
+    // Optional "?returnUrl=" so users are sent back where they came from after login.
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private string? _errorMessage;
+
+    private async Task LogInAsync()
+    {
+        var user = AccountService.ValidateCredentials(Input.Email, Input.Password);
+        if (user is null)
+        {
+            // Deliberately vague message — don't reveal whether email or password was wrong.
+            _errorMessage = "Invalid email or password. Please try again.";
+            return;
+        }
+
+        // Build the claims principal and write the authentication cookie.
+        var principal = AccountService.BuildPrincipal(user);
+        var properties = new AuthenticationProperties { IsPersistent = Input.RememberMe };
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, properties);
+
+        // Redirect to the requested page (or home). Only local URLs are allowed
+        // to avoid open-redirect attacks. forceLoad ensures the new auth cookie
+        // is picked up cleanly by the next request.
+        var destination = IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
+        Navigation.NavigateTo(destination, forceLoad: true);
+    }
+
+    // A URL is "local" only if it targets this site (starts with a single '/').
+    private static bool IsLocalUrl(string? url) =>
+        !string.IsNullOrEmpty(url) && url.StartsWith('/') && !url.StartsWith("//");
+
+    /// <summary>Form model with validation rules for the login screen.</summary>
+    private sealed class LoginInput
+    {
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Enter a valid email address.")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "Password is required.")]
+        public string Password { get; set; } = "";
+
+        public bool RememberMe { get; set; }
+    }
+}

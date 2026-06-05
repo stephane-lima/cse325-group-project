@@ -1,9 +1,14 @@
-﻿@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Routing
 
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        @* Force the router to handle page types strictly through explicit matching *@
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        @* AuthorizeRouteView enforces [Authorize] on pages. Unauthorized users
+           are sent to the login page via the NotAuthorized content below. *@
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                <RedirectToLogin />
+            </NotAuthorized>
+        </AuthorizeRouteView>
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
     <NotFound>
