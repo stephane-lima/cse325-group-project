@@ -1,0 +1,111 @@
+﻿@page "/login"
+@page "/Account/Login"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using BudgetAndExpenseTracker.Services
+@inject IAccountService AccountService
+@inject NavigationManager Navigation
+
+<PageTitle>Log in</PageTitle>
+
+<section class="auth-page" style="display: flex; justify-content: center; align-items: center; min-height: 80vh; background-color: #ffffff; padding: 2rem;">
+    <div class="auth-card" style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 2.5rem; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.02); width: 100%; max-width: 420px;">
+        <header class="auth-card__header" style="margin-bottom: 2rem; text-align: center;">
+            <h1 class="auth-card__title" style="font-size: 1.75rem; font-weight: 800; color: #111827; margin: 0 0 0.5rem 0;">Welcome back</h1>
+            <p class="auth-card__subtitle" style="font-size: 0.9rem; color: #6b7280; margin: 0;">Log in to manage your budget and expenses.</p>
+        </header>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="auth-alert" role="alert" style="background-color: #fee2e2; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center;">
+                @_errorMessage
+            </div>
+        }
+
+        <EditForm Model="Input" method="post" OnValidSubmit="LogInAsync" FormName="loginForm" novalidate>
+            <DataAnnotationsValidator />
+
+            <div class="auth-field" style="margin-bottom: 1.25rem;">
+                <label for="email" class="form-label">Email</label>
+                <InputText id="email" class="form-control" @bind-Value="Input.Email"
+                           autocomplete="username" aria-required="true" placeholder="you@example.com" />
+                <ValidationMessage For="() => Input.Email" class="validation-message" />
+            </div>
+
+            <div class="auth-field" style="margin-bottom: 1.25rem;">
+                <label for="password" class="form-label">Password</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="Input.Password"
+                           autocomplete="current-password" aria-required="true" placeholder="Enter your password" />
+                <ValidationMessage For="() => Input.Password" class="validation-message" />
+            </div>
+
+            <div class="auth-field auth-field--checkbox" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <InputCheckbox id="remember" class="auth-checkbox" @bind-Value="Input.RememberMe" style="width: 16px; height: 16px; accent-color: #10b981;" />
+                <label for="remember" class="form-label" style="margin: 0; text-transform: none; font-weight: 600; font-size: 0.85rem;">Keep me signed in</label>
+            </div>
+
+            <button type="submit" class="btn-submit">Log in</button>
+        </EditForm>
+
+        <p class="auth-switch" style="text-align: center; font-size: 0.85rem; color: #4b5563; margin-top: 1.5rem; margin-bottom: 0;">
+            Don't have an account? <a href="Account/Register" style="color: #065f46; font-weight: 700; text-decoration: none;">Create one</a>
+        </p>
+
+        <p class="auth-demo" style="text-align: center; font-size: 0.8rem; background: #e2f3e9; color: #065f46; padding: 0.6rem; border-radius: 8px; margin-top: 1.5rem; margin-bottom: 0; font-weight: 500;">
+            Demo login: <strong style="font-weight: 700;">demo@budgettracker.com</strong> / <strong style="font-weight: 700;">Password123!</strong>
+        </p>
+    </div>
+</section>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private LoginInput? Input { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private string? _errorMessage;
+
+    protected override void OnInitialized()
+    {
+        Input ??= new();
+    }
+
+    private async Task LogInAsync()
+    {
+        if (Input is null) return;
+
+        var user = AccountService.ValidateCredentials(Input.Email, Input.Password);
+        if (user is null)
+        {
+            _errorMessage = "Invalid email or password. Please try again.";
+            return;
+        }
+
+        var principal = AccountService.BuildPrincipal(user);
+        var properties = new AuthenticationProperties { IsPersistent = Input.RememberMe };
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, properties);
+
+        var destination = IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
+        Navigation.NavigateTo(destination, forceLoad: true);
+    }
+
+    private static bool IsLocalUrl(string? url) =>
+        !string.IsNullOrEmpty(url) && url.StartsWith('/') && !url.StartsWith("//");
+
+    private sealed class LoginInput
+    {
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Enter a valid email address.")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "Password is required.")]
+        public string Password { get; set; } = "";
+
+        public bool RememberMe { get; set; }
+    }
+}

@@ -1,0 +1,174 @@
+/*
+   Styles for the authentication pages (Login / Register).
+   Theme: "money green" to match the Budget & Expense Tracker brand.
+   Accessibility notes:
+     - All interactive elements keep a visible :focus-visible outline (WCAG 2.4.7).
+     - Color contrast for text/buttons targets WCAG 2.1 AA.
+     - Layout is responsive down to small phone widths.
+*/
+
+:root {
+    --auth-brand: #1f7a4d;          /* primary green */
+    --auth-brand-dark: #155c39;     /* hover/active green */
+    --auth-bg: #f4f7f5;             /* page background */
+    --auth-card-bg: #ffffff;
+    --auth-text: #1a2b22;
+    --auth-muted: #5c6b63;
+    --auth-border: #cdd8d1;
+    --auth-error: #b3261e;
+    --auth-radius: 12px;
+}
+
+.auth-page {
+    min-height: calc(100vh - 4rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    background-color: var(--auth-bg);
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--auth-card-bg);
+    border: 1px solid var(--auth-border);
+    border-radius: var(--auth-radius);
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(31, 122, 77, 0.08);
+}
+
+.auth-card__header {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.auth-card__title {
+    margin: 0 0 0.25rem;
+    font-size: 1.6rem;
+    color: var(--auth-text);
+}
+
+.auth-card__subtitle {
+    margin: 0;
+    color: var(--auth-muted);
+    font-size: 0.95rem;
+}
+
+.auth-field {
+    margin-bottom: 1.1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-field--checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.auth-label {
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--auth-text);
+}
+
+.auth-label--inline {
+    margin-bottom: 0;
+    font-weight: 400;
+}
+
+.auth-input {
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--auth-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--auth-text);
+    background: #fff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-input:focus,
+.auth-input:focus-visible {
+    outline: none;
+    border-color: var(--auth-brand);
+    box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.25);
+}
+
+.auth-checkbox {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--auth-brand);
+}
+
+.auth-button {
+    width: 100%;
+    margin-top: 0.25rem;
+    padding: 0.8rem 1rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--auth-brand);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.auth-button:hover {
+    background: var(--auth-brand-dark);
+}
+
+.auth-button:focus-visible {
+    outline: 3px solid var(--auth-brand-dark);
+    outline-offset: 2px;
+}
+
+.auth-validation {
+    margin-top: 0.3rem;
+    color: var(--auth-error);
+    font-size: 0.82rem;
+}
+
+.auth-alert {
+    margin-bottom: 1.25rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--auth-error);
+    border-radius: 8px;
+    background: #fbeceb;
+    color: var(--auth-error);
+    font-size: 0.9rem;
+}
+
+.auth-switch,
+.auth-demo {
+    margin: 1rem 0 0;
+    text-align: center;
+    font-size: 0.88rem;
+    color: var(--auth-muted);
+}
+
+.auth-switch a {
+    color: var(--auth-brand);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-switch a:hover,
+.auth-switch a:focus-visible {
+    text-decoration: underline;
+}
+
+.auth-demo {
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--auth-border);
+    color: var(--auth-muted);
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 1.5rem;
+    }
+}
