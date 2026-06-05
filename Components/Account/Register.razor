@@ -1,4 +1,5 @@
-@page "/register"
+﻿@page "/register"
+@page "/Account/Register"
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
@@ -6,62 +7,54 @@
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
 
-@*
-    Registration page. Statically rendered for the same reason as Login:
-    we create the account and immediately sign the user in (writing the auth
-    cookie) before the response is sent.
-*@
-
 <PageTitle>Create account</PageTitle>
 
-<section class="auth-page">
-    <div class="auth-card">
-        <header class="auth-card__header">
-            <h1 class="auth-card__title">Create your account</h1>
-            <p class="auth-card__subtitle">Start tracking your budget in minutes.</p>
+<section class="auth-page" style="display: flex; justify-content: center; align-items: center; min-height: 80vh; background-color: #ffffff; padding: 2rem;">
+    <div class="auth-card" style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 2.5rem; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.02); width: 100%; max-width: 420px;">
+        <header class="auth-card__header" style="margin-bottom: 2rem; text-align: center;">
+            <h1 class="auth-card__title" style="font-size: 1.75rem; font-weight: 800; color: #111827; margin: 0 0 0.5rem 0;">Create account</h1>
+            <p class="auth-card__subtitle" style="font-size: 0.9rem; color: #6b7280; margin: 0;">Start tracking your budget in minutes.</p>
         </header>
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
-            <div class="auth-alert" role="alert">@_errorMessage</div>
+            <div class="auth-alert" role="alert" style="background-color: #fee2e2; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center;">
+                @_errorMessage
+            </div>
         }
 
-        <EditForm Model="Input" method="post" OnValidSubmit="RegisterAsync" FormName="register" novalidate>
+        <EditForm Model="Input" method="post" OnValidSubmit="RegisterAsync" FormName="registerForm" novalidate>
             <DataAnnotationsValidator />
 
-            <div class="auth-field">
-                <label for="name" class="auth-label">Display name</label>
-                <InputText id="name" class="auth-input" @bind-Value="Input.DisplayName"
-                           autocomplete="name" placeholder="Jane Doe" />
-                <ValidationMessage For="() => Input.DisplayName" class="auth-validation" />
+            <div class="auth-field" style="margin-bottom: 1.25rem;">
+                <label for="name" class="form-label">Display name</label>
+                <InputText id="name" class="form-control" @bind-Value="Input.DisplayName" autocomplete="name" placeholder="Jane Doe" />
+                <ValidationMessage For="() => Input.DisplayName" class="validation-message" />
             </div>
 
-            <div class="auth-field">
-                <label for="email" class="auth-label">Email</label>
-                <InputText id="email" class="auth-input" @bind-Value="Input.Email"
-                           autocomplete="username" aria-required="true" placeholder="you@example.com" />
-                <ValidationMessage For="() => Input.Email" class="auth-validation" />
+            <div class="auth-field" style="margin-bottom: 1.25rem;">
+                <label for="email" class="form-label">Email</label>
+                <InputText id="email" class="form-control" @bind-Value="Input.Email" autocomplete="username" aria-required="true" placeholder="you@example.com" />
+                <ValidationMessage For="() => Input.Email" class="validation-message" />
             </div>
 
-            <div class="auth-field">
-                <label for="password" class="auth-label">Password</label>
-                <InputText id="password" type="password" class="auth-input" @bind-Value="Input.Password"
-                           autocomplete="new-password" aria-required="true" placeholder="At least 6 characters" />
-                <ValidationMessage For="() => Input.Password" class="auth-validation" />
+            <div class="auth-field" style="margin-bottom: 1.25rem;">
+                <label for="password" class="form-label">Password</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="Input.Password" autocomplete="new-password" aria-required="true" placeholder="At least 6 characters" />
+                <ValidationMessage For="() => Input.Password" class="validation-message" />
             </div>
 
-            <div class="auth-field">
-                <label for="confirm" class="auth-label">Confirm password</label>
-                <InputText id="confirm" type="password" class="auth-input" @bind-Value="Input.ConfirmPassword"
-                           autocomplete="new-password" aria-required="true" placeholder="Re-enter your password" />
-                <ValidationMessage For="() => Input.ConfirmPassword" class="auth-validation" />
+            <div class="auth-field" style="margin-bottom: 1.5rem;">
+                <label for="confirm" class="form-label">Confirm password</label>
+                <InputText id="confirm" type="password" class="form-control" @bind-Value="Input.ConfirmPassword" autocomplete="new-password" aria-required="true" placeholder="Re-enter your password" />
+                <ValidationMessage For="() => Input.ConfirmPassword" class="validation-message" />
             </div>
 
-            <button type="submit" class="auth-button">Create account</button>
+            <button type="submit" class="btn-submit">Create account</button>
         </EditForm>
 
-        <p class="auth-switch">
-            Already have an account? <a href="login">Log in</a>
+        <p class="auth-switch" style="text-align: center; font-size: 0.85rem; color: #4b5563; margin-top: 1.5rem; margin-bottom: 0;">
+            Already have an account? <a href="Account/Login" style="color: #065f46; font-weight: 700; text-decoration: none;">Log in</a>
         </p>
     </div>
 </section>
@@ -71,12 +64,19 @@
     private HttpContext HttpContext { get; set; } = default!;
 
     [SupplyParameterFromForm]
-    private RegisterInput Input { get; set; } = new();
+    private RegisterInput? Input { get; set; }
 
     private string? _errorMessage;
 
+    protected override void OnInitialized()
+    {
+        Input ??= new();
+    }
+
     private async Task RegisterAsync()
     {
+        if (Input is null) return;
+
         var (success, error) = AccountService.Register(Input.Email, Input.DisplayName, Input.Password);
         if (!success)
         {
@@ -84,7 +84,6 @@
             return;
         }
 
-        // Auto sign-in the brand-new user, then send them to the home page.
         var user = AccountService.ValidateCredentials(Input.Email, Input.Password)!;
         var principal = AccountService.BuildPrincipal(user);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
@@ -92,7 +91,6 @@
         Navigation.NavigateTo("/", forceLoad: true);
     }
 
-    /// <summary>Form model with validation rules for registration.</summary>
     private sealed class RegisterInput
     {
         [Required(ErrorMessage = "Display name is required.")]

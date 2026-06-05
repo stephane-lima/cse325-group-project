@@ -1,27 +1,54 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="app-shell">
-    @* This calls your NavMenu component file directly *@
-    <NavMenu />
+    <div class="sidebar-wrapper">
+        <div>
+            <NavMenu />
+        </div>
+
+        <div class="sidebar-profile">
+            <span class="profile-avatar">👤</span>
+            <div class="profile-info">
+                <span class="profile-name">Stephanie S.</span>
+                <span class="profile-role">Account Owner</span>
+            </div>
+        </div>
+    </div>
 
     <main class="main-workspace">
-        @* Top Runtime Header block with user initials *@
         <header class="workspace-header">
-            <div class="header-left">
+            <div style="display: flex; align-items: center;">
                 <span class="badge-live">LIVE</span>
                 <span class="header-subtitle">Monitoring spending</span>
             </div>
+
             <div class="header-profile-section">
                 <button class="icon-notification-btn">
-                    🔔<span class="notification-indicator"></span>
+                    🔔
+                    <span class="notification-indicator"></span>
                 </button>
                 <div class="profile-divider"></div>
-                <div class="profile-badge">SS</div>
-                <span class="profile-name">Stephanie S.</span>
+                
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="profile-badge">SS</div>
+                        <span class="profile-name" style="margin-right: 10px;">@context.User.Identity?.Name</span>
+                        <form action="Account/Logout" method="post" style="margin: 0; display: inline;">
+                            <AntiforgeryToken />
+                            <button type="submit" class="auth-action-link" style="background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #dc2626; cursor: pointer; padding: 0;">
+                                Log Out 🚪
+                            </button>
+                        </form>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="login" class="auth-action-link" style="font-size: 0.85rem; font-weight: 700; text-decoration: none; color: #065f46;">
+                            🔑 System Login
+                        </a>
+                    </NotAuthorized>
+                </AuthorizeView>
             </div>
         </header>
 
-        @* Dynamic Page Content Canvas injection site *@
         <div class="content-body">
             @Body
         </div>

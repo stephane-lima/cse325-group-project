@@ -16,21 +16,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(); 
 
-// Register DbContextFactory pointing to the matching "SqliteDatabase" key
+// Fixed Factory Registration to use your actual appsettings key name
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-{
-    // Match the exact name defined inside your appsettings.json
-    var connectionString = builder.Configuration.GetConnectionString("SqliteDatabase");
-    
-    if (string.IsNullOrEmpty(connectionString))
-    {
-        throw new InvalidOperationException("Connection string 'SqliteDatabase' was not found in configuration files.");
-    }
-    
-    options.UseSqlite(connectionString);
-});
+    options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDatabase")));
 
-// Authentication Engine
+builder.Services.AddScoped<IAccountService, InMemoryAccountService>();
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -39,11 +30,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddScoped<IAccountService, InMemoryAccountService>();
 
 var app = builder.Build();
 
-// Core DB Generation hook using the corrected layout registration
+// Stable database generator execution block
 using (var scope = app.Services.CreateScope())
 {
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
@@ -64,6 +54,7 @@ app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Logout endpoint
 app.MapPost("/Account/Logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

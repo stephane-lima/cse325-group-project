@@ -1,54 +1,13 @@
-<div class="sidebar-wrapper">
-    <nav>
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-link-item">
-                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                        <span class="nav-emoji">??</span> Dashboard
-                    </NavLink>
-                </div>
-                <div class="nav-link-item">
-                    <NavLink class="nav-link" href="transactions">
-                        <span class="nav-emoji">??</span> Transactions
-                    </NavLink>
-                </div>
-                <div class="nav-link-item">
-                    <NavLink class="nav-link" href="goals">
-                        <span class="nav-emoji">??</span> Goals
-                    </NavLink>
-                </div>
-                <div class="nav-link-item">
-                    <NavLink class="nav-link" href="profile">
-                        <span class="nav-emoji">??</span> Profile
-                    </NavLink>
-                </div>
-                <div class="nav-link-item">
-                    <form action="Account/Logout" method="post" style="display: inline; width: 100%;">
-                        <AntiforgeryToken />
-                        <button type="submit" class="nav-link" style="background: none; border: none; text-align: left; width: 100%; cursor: pointer; padding: 0; font: inherit;">
-                            <span class="nav-emoji">??</span> Log out
-                        </button>
-                    </form>
-                </div>
-            </Authorized>
-            <NotAuthorized>
-                <div class="nav-link-item">
-                    <NavLink class="nav-link" href="login">
-                        <span class="nav-emoji">??</span> Log in
-                    </NavLink>
-                </div>
-            </NotAuthorized>
-        </AuthorizeView>
-    </nav>
-    <AuthorizeView>
-        <Authorized>
-            <div class="sidebar-profile">
-                <div class="profile-avatar">?????</div>
-                <div class="profile-info">
-                    <span class="profile-name">@context.User.Identity?.Name</span>
-                    <span class="profile-role">?? Parent</span>
-                </div>
-            </div>
-        </Authorized>
-    </AuthorizeView>
-</div>
+﻿<nav>
+    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+        <span class="nav-emoji">📊</span> Dashboard
+    </NavLink>
+
+    <NavLink class="nav-link" href="transactions">
+        <span class="nav-emoji">💳</span> Transactions
+    </NavLink>
+
+    <NavLink class="nav-link" href="goals">
+        <span class="nav-emoji">🎯</span> Financial Goals
+    </NavLink>
+</nav>

@@ -1,4 +1,5 @@
-@page "/login"
+﻿@page "/login"
+@page "/Account/Login"
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
@@ -6,106 +7,96 @@
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
 
-@*
-    Login page for the Budget & Expense Tracker.
-    Rendered statically (no @rendermode) on purpose: a static server-rendered form
-    runs inside the HTTP request pipeline, so we can write the authentication cookie
-    via HttpContext.SignInAsync before the response is sent. After signing in we
-    redirect with NavigationManager, which issues an HTTP redirect in static SSR.
-*@
-
 <PageTitle>Log in</PageTitle>
 
-<section class="auth-page">
-    <div class="auth-card">
-        <header class="auth-card__header">
-            <h1 class="auth-card__title">Welcome back</h1>
-            <p class="auth-card__subtitle">Log in to manage your budget and expenses.</p>
+<section class="auth-page" style="display: flex; justify-content: center; align-items: center; min-height: 80vh; background-color: #ffffff; padding: 2rem;">
+    <div class="auth-card" style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 2.5rem; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.02); width: 100%; max-width: 420px;">
+        <header class="auth-card__header" style="margin-bottom: 2rem; text-align: center;">
+            <h1 class="auth-card__title" style="font-size: 1.75rem; font-weight: 800; color: #111827; margin: 0 0 0.5rem 0;">Welcome back</h1>
+            <p class="auth-card__subtitle" style="font-size: 0.9rem; color: #6b7280; margin: 0;">Log in to manage your budget and expenses.</p>
         </header>
 
-        @* Error banner — uses role="alert" so screen readers announce it. *@
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
-            <div class="auth-alert" role="alert">@_errorMessage</div>
+            <div class="auth-alert" role="alert" style="background-color: #fee2e2; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center;">
+                @_errorMessage
+            </div>
         }
 
-        <EditForm Model="Input" method="post" OnValidSubmit="LogInAsync" FormName="login" novalidate>
+        <EditForm Model="Input" method="post" OnValidSubmit="LogInAsync" FormName="loginForm" novalidate>
             <DataAnnotationsValidator />
 
-            <div class="auth-field">
-                <label for="email" class="auth-label">Email</label>
-                <InputText id="email" class="auth-input" @bind-Value="Input.Email"
+            <div class="auth-field" style="margin-bottom: 1.25rem;">
+                <label for="email" class="form-label">Email</label>
+                <InputText id="email" class="form-control" @bind-Value="Input.Email"
                            autocomplete="username" aria-required="true" placeholder="you@example.com" />
-                <ValidationMessage For="() => Input.Email" class="auth-validation" />
+                <ValidationMessage For="() => Input.Email" class="validation-message" />
             </div>
 
-            <div class="auth-field">
-                <label for="password" class="auth-label">Password</label>
-                <InputText id="password" type="password" class="auth-input" @bind-Value="Input.Password"
+            <div class="auth-field" style="margin-bottom: 1.25rem;">
+                <label for="password" class="form-label">Password</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="Input.Password"
                            autocomplete="current-password" aria-required="true" placeholder="Enter your password" />
-                <ValidationMessage For="() => Input.Password" class="auth-validation" />
+                <ValidationMessage For="() => Input.Password" class="validation-message" />
             </div>
 
-            <div class="auth-field auth-field--checkbox">
-                <InputCheckbox id="remember" class="auth-checkbox" @bind-Value="Input.RememberMe" />
-                <label for="remember" class="auth-label auth-label--inline">Keep me signed in</label>
+            <div class="auth-field auth-field--checkbox" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <InputCheckbox id="remember" class="auth-checkbox" @bind-Value="Input.RememberMe" style="width: 16px; height: 16px; accent-color: #10b981;" />
+                <label for="remember" class="form-label" style="margin: 0; text-transform: none; font-weight: 600; font-size: 0.85rem;">Keep me signed in</label>
             </div>
 
-            <button type="submit" class="auth-button">Log in</button>
+            <button type="submit" class="btn-submit">Log in</button>
         </EditForm>
 
-        <p class="auth-switch">
-            Don't have an account? <a href="register">Create one</a>
+        <p class="auth-switch" style="text-align: center; font-size: 0.85rem; color: #4b5563; margin-top: 1.5rem; margin-bottom: 0;">
+            Don't have an account? <a href="Account/Register" style="color: #065f46; font-weight: 700; text-decoration: none;">Create one</a>
         </p>
 
-        <p class="auth-demo">
-            Demo login: <strong>demo@budgettracker.com</strong> / <strong>Password123!</strong>
+        <p class="auth-demo" style="text-align: center; font-size: 0.8rem; background: #e2f3e9; color: #065f46; padding: 0.6rem; border-radius: 8px; margin-top: 1.5rem; margin-bottom: 0; font-weight: 500;">
+            Demo login: <strong style="font-weight: 700;">demo@budgettracker.com</strong> / <strong style="font-weight: 700;">Password123!</strong>
         </p>
     </div>
 </section>
 
 @code {
-    // The HttpContext is supplied as a cascading parameter during static server rendering.
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
 
-    // Bind the posted form fields to this model.
     [SupplyParameterFromForm]
-    private LoginInput Input { get; set; } = new();
+    private LoginInput? Input { get; set; }
 
-    // Optional "?returnUrl=" so users are sent back where they came from after login.
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
     private string? _errorMessage;
 
+    protected override void OnInitialized()
+    {
+        Input ??= new();
+    }
+
     private async Task LogInAsync()
     {
+        if (Input is null) return;
+
         var user = AccountService.ValidateCredentials(Input.Email, Input.Password);
         if (user is null)
         {
-            // Deliberately vague message — don't reveal whether email or password was wrong.
             _errorMessage = "Invalid email or password. Please try again.";
             return;
         }
 
-        // Build the claims principal and write the authentication cookie.
         var principal = AccountService.BuildPrincipal(user);
         var properties = new AuthenticationProperties { IsPersistent = Input.RememberMe };
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, properties);
 
-        // Redirect to the requested page (or home). Only local URLs are allowed
-        // to avoid open-redirect attacks. forceLoad ensures the new auth cookie
-        // is picked up cleanly by the next request.
         var destination = IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
         Navigation.NavigateTo(destination, forceLoad: true);
     }
 
-    // A URL is "local" only if it targets this site (starts with a single '/').
     private static bool IsLocalUrl(string? url) =>
         !string.IsNullOrEmpty(url) && url.StartsWith('/') && !url.StartsWith("//");
 
-    /// <summary>Form model with validation rules for the login screen.</summary>
     private sealed class LoginInput
     {
         [Required(ErrorMessage = "Email is required.")]
