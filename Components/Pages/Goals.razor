@@ -1,0 +1,324 @@
+@page "/goals"
+@layout Layout.MainLayout
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@using BudgetAndExpenseTracker.Data
+@using BudgetAndExpenseTracker.Models
+@using Microsoft.EntityFrameworkCore
+
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<PageTitle>Financial Goals</PageTitle>
+
+<section class="row text-center mb-4 p-3">
+    <div class="col-md-4 mb-3">
+		<div class="card h-100 border-0 shadow-sm bg-white border-bottom border-primary border-4 rounded-top">
+			<div class="card-body p-4 d-flex flex-column justify-content-between">
+				<span class="fs-6 text-muted text-uppercase fw-bold tracking-wider">Total Goals</span>
+				<h2 class="display-6 fw-bold text-primary my-3">@goals.Count</h2>
+				<small class="text-muted">All your financial goals!</small>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-4 mb-3">
+		<div class="card h-100 border-0 shadow-sm bg-white">
+			<div class="card-body p-4 d-flex flex-column justify-content-between border-bottom border-success border-4 rounded-top">
+				<span class="fs-6 text-muted text-uppercase fw-bold tracking-wider">Total Target</span>
+				<h2 class="display-6 fw-bold text-success my-3">$@TotalTarget.ToString("N2")</h2>
+				<small class="text-muted">Across all goals</small>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-4 mb-3">
+		<div class="card h-100 border-0 shadow-sm bg-white">
+			<div class="card-body p-4 d-flex flex-column justify-content-between border-bottom border-danger border-4 rounded-top">
+				<span class="fs-6 text-muted text-uppercase fw-bold tracking-wider">Total Saved</span>
+				<h2 class="display-6 fw-bold text-danger my-3">$@TotalSaved.ToString("N2")</h2>
+				<small class="text-muted">@TotalSavedPercentage% of total target</small>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-4 mb-3">
+		<div class="card h-100 border-0 shadow-sm bg-white">
+			<div class="card-body p-4 d-flex flex-column justify-content-between border-bottom border-danger border-4 rounded-top">
+				<span class="fs-6 text-muted text-uppercase fw-bold tracking-wider">Total Remaining</span>
+				<h2 class="display-6 fw-bold text-danger my-3">$@TotalRemaining.ToString("N2")</h2>
+				<small class="text-muted">@TotalRemainingPercentage% of total target</small>
+			</div>
+		</div>
+	</div>
+</section>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-5 mb-4">
+            <div class="card p-4 shadow-sm">
+				<h3 class="mb-3">Create a New Goal</h3>
+
+				<EditForm Model="newGoal" OnValidSubmit="AddGoal">
+					<DataAnnotationsValidator />
+					<div class="form-group">
+						<label class="form-label">Goal Name</label>
+						<InputText class="form-control" @bind-Value="newGoal.Name" />
+						<ValidationMessage For="() => newGoal.Name" class="validation-message" />
+					</div>
+
+					<div class="form-group">
+						<label class="form-label">Target Amount</label>
+						<InputNumber class="form-control" @bind-Value="newGoal.TargetAmount" />
+						<ValidationMessage For="() => newGoal.TargetAmount" class="validation-message" />
+					</div>
+
+					<div class="form-group">
+						<label class="form-label">Starting Saved Amount</label>
+						<InputNumber class="form-control" @bind-Value="newGoal.SavedAmount" />
+						<ValidationMessage For="() => newGoal.SavedAmount" class="validation-message" />
+					</div>
+
+					<div class="form-group">
+						<label class="form-label">Target Date</label>
+						<InputDate class="form-control" @bind-Value="newGoal.TargetDate" />
+						<ValidationMessage For="() => newGoal.TargetDate" class="validation-message" />
+					</div>
+
+					<button type="submit" class="btn btn-primary w-100 mt-2">Add Goal</button>
+				</EditForm>
+			</div>
+		</div>
+
+		<div class="col-md-7">
+            <div class="card p-4 shadow-sm">
+				<h3>Your Goals</h3>
+
+				@if (!goals.Any())
+				{
+					<div class="empty-text">You have no goals yet — add one using the form.</div>
+				}
+
+				<div class="goals-grid">
+					@foreach (var g in goals)
+					{
+						<div class="goal-progress-box">
+							<div class="goal-meta">
+								<div>
+									<div class="goal-name">@g.Name</div>
+									<div class="goal-numbers">Target $@g.TargetAmount.ToString("N2")</div>
+									<div class="goal-numbers">Due @g.TargetDate.ToShortDateString()</div>
+								</div>
+								<div style="text-align: right;">
+									<div class="goal-pct">@GetPercent(g) %</div>
+									<div class="goal-numbers">Saved $@g.SavedAmount.ToString("N2")</div>
+								</div>
+							</div>
+
+							<div class="progress-bar-container" style="margin: .75rem 0;">
+								<div class="progress-fill" style="width: @GetPercent(g)%"></div>
+							</div>
+
+							<div class="form-group-row" style="margin-top: .5rem; align-items: center;">
+								<div>
+									<input class="form-control" type="number" step="0.01" @bind="gEditAmounts[g.Id]" placeholder="Add amount" />
+								</div>
+								<div style="display:flex; gap:.5rem;">
+									<button class="btn-submit" @onclick="() => AddToSaved(g)">Add Funds</button>
+									<button class="btn-submit" @onclick="() => RemoveFromSaved(g)">Remove Funds</button>
+									<button class="btn-delete" @onclick="() => RemoveGoal(g)">🗑️</button>
+								</div>
+							</div>
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@*<div class="dashboard-container">
+	<div class="workspace-grid">
+		<div class="data-card">
+			<h2 class="section-title">Create a New Goal</h2>
+
+			<EditForm Model="newGoal" OnValidSubmit="AddGoal">
+				<div class="form-group">
+					<label class="form-label">Goal Name</label>
+					<InputText class="form-control" @bind-Value="newGoal.Name" />
+					<ValidationMessage For="() => newGoal.Name" class="validation-message" />
+				</div>
+
+				<div class="form-group form-group-row">
+					<div>
+						<label class="form-label">Target Amount</label>
+						<InputNumber class="form-control" @bind-Value="newGoal.TargetAmount" />
+						<ValidationMessage For="() => newGoal.TargetAmount" class="validation-message" />
+					</div>
+					<div>
+						<label class="form-label">Target Date</label>
+						<InputDate class="form-control" @bind-Value="newGoal.TargetDate" />
+						<ValidationMessage For="() => newGoal.TargetDate" class="validation-message" />
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label class="form-label">Starting Saved Amount</label>
+					<InputNumber class="form-control" @bind-Value="newGoal.SavedAmount" />
+				</div>
+
+				<button type="submit" class="btn-submit">Add Goal</button>
+			</EditForm>
+		</div>
+
+		<div class="data-card">
+			<h2 class="section-title">Your Goals</h2>
+
+			@if (!goals.Any())
+			{
+				<div class="empty-text">You have no goals yet — add one using the form.</div>
+			}
+
+			<div class="goals-grid">
+				@foreach (var g in goals)
+				{
+					<div class="goal-progress-box">
+						<div class="goal-meta">
+							<div>
+								<div class="goal-name">@g.Name</div>
+								<div class="goal-numbers">Target @g.TargetAmount.ToString("C") • Due @g.TargetDate.ToShortDateString()</div>
+							</div>
+							<div style="text-align: right;">
+								<div class="goal-pct">@GetPercent(g) %</div>
+								<div class="goal-numbers">Saved @g.SavedAmount.ToString("C")</div>
+							</div>
+						</div>
+
+						<div class="progress-bar-container" style="margin: .75rem 0;">
+							<div class="progress-fill" style="width: @GetPercent(g)%"></div>
+						</div>
+
+						<div class="form-group-row" style="margin-top: .5rem; align-items: center;">
+							<div>
+								<input class="form-control" type="number" step="0.01" @bind="gEditAmounts[g.Id]" placeholder="Add amount" />
+							</div>
+							<div style="display:flex; gap:.5rem;">
+								<button class="btn-submit" @onclick="() => AddToSaved(g)">Add Funds</button>
+								<button class="btn-delete" @onclick="() => RemoveGoal(g)">🗑️</button>
+							</div>
+						</div>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+</div> *@
+
+@code {
+	private List<Goal> goals = new();
+
+	private Goal newGoal = new() { TargetDate = DateTime.Today.AddMonths(1) };
+
+	// small dictionary to hold per-goal edit amounts (bound to inputs)
+	private Dictionary<int, decimal> gEditAmounts = new();
+
+	private decimal TotalTarget;
+	private decimal TotalSaved;
+	private decimal TotalRemaining;
+	private decimal TotalSavedPercentage;
+	private decimal TotalRemainingPercentage;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadGoalsAsync();
+	}
+
+	private async Task LoadGoalsAsync()
+	{
+		using var db = await DbFactory.CreateDbContextAsync();
+		goals = await db.Goals.OrderByDescending(g => g.Id).ToListAsync();
+		gEditAmounts = goals.ToDictionary(g => g.Id, g => 0m);
+		
+		TotalTarget = goals.Sum(x => x.TargetAmount);
+		TotalSaved = goals.Sum(x => x.SavedAmount);
+
+		TotalRemaining = TotalTarget - TotalSaved;
+
+		TotalSavedPercentage = (TotalTarget == 0) ? 0 : Math.Round((TotalSaved / TotalTarget) * 100, 2);
+	
+		TotalRemainingPercentage = 100 - TotalSavedPercentage;
+	}
+
+	private async Task AddGoal()
+	{
+		var g = new Goal
+		{
+			Name = newGoal.Name?.Trim() ?? "Untitled Goal",
+			TargetAmount = newGoal.TargetAmount,
+			SavedAmount = newGoal.SavedAmount,
+			TargetDate = newGoal.TargetDate
+		};
+
+		using var db = await DbFactory.CreateDbContextAsync();
+		db.Goals.Add(g);
+		await db.SaveChangesAsync();
+
+		await LoadGoalsAsync();
+		newGoal = new Goal { TargetDate = DateTime.Today.AddMonths(1) };
+	}
+
+	private async Task RemoveGoal(Goal g)
+	{
+		using var db = await DbFactory.CreateDbContextAsync();
+		db.Goals.Remove(g);
+		await db.SaveChangesAsync();
+		await LoadGoalsAsync();
+	}
+
+	private async Task AddToSaved(Goal g)
+	{
+		if (!gEditAmounts.TryGetValue(g.Id, out var amt)) return;
+		if (amt <= 0) return;
+
+		using var db = await DbFactory.CreateDbContextAsync();
+		var entity = await db.Goals.FindAsync(g.Id);
+		if (entity == null) return;
+		entity.SavedAmount += Math.Round(amt, 2);
+		await db.SaveChangesAsync();
+		await LoadGoalsAsync();
+	}
+
+	private async Task RemoveFromSaved(Goal g)
+	{
+		if (!gEditAmounts.TryGetValue(g.Id, out var amt)) return;
+		if (amt <= 0) return;
+
+		using var db = await DbFactory.CreateDbContextAsync();
+		var entity = await db.Goals.FindAsync(g.Id);
+		if (entity == null) return;
+		entity.SavedAmount -= Math.Round(amt, 2);
+		await db.SaveChangesAsync();
+		await LoadGoalsAsync();
+	}
+
+	private int GetPercent(Goal g)
+	{
+		if (g.TargetAmount <= 0) return 0;
+		var pct = (int)Math.Min(100, Math.Floor((double)(g.SavedAmount / g.TargetAmount * 100)));
+		return pct;
+	}
+
+	@* private class GoalInputModel
+	{
+		[Required]
+		public string Name { get; set; } = string.Empty;
+
+		[Range(0.01, double.MaxValue, ErrorMessage = "Enter a positive target amount")]
+		public decimal TargetAmount { get; set; } = 100m;
+
+		[Range(0.01, double.MaxValue, ErrorMessage = "Enter a positive target amount")]
+		public decimal SavedAmount { get; set; } = 0m;
+
+		[Required]
+		public DateTime TargetDate { get; set; } = DateTime.Today.AddMonths(1);
+	} *@
+}
