@@ -35,13 +35,22 @@ builder.Services.AddCascadingAuthenticationState();
 var app = builder.Build();
 
 // Stable database generator execution block
+// Stable database generator execution block with Linux Directory Guards
 using (var scope = app.Services.CreateScope())
 {
-    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
-    using var dbContext = factory.CreateDbContext();
-    
-    // Ensures the SQLite database file and tables are initialized
-    dbContext.Database.EnsureCreated();
+    try
+    {
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+        using var dbContext = factory.CreateDbContext();
+        
+        Console.WriteLine("[DB INITIALIZATION] Forcing SQLite creation check...");
+        dbContext.Database.EnsureCreated();
+        Console.WriteLine("[DB INITIALIZATION] Database verification successful!");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[DB FATAL ERROR] Initialization failed: {ex.Message}");
+    }
 }
 
 if (!app.Environment.IsDevelopment())
