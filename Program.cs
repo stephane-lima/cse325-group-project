@@ -17,14 +17,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(); 
 
-// Database Factory Registration
+// Fixed Factory Registration to use your actual appsettings key name
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("FreshSqliteDatabase")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDatabase")));
 
-// --- FIXED: REGISTER THE IN-MEMORY ACCOUNT SERVICE ---
 builder.Services.AddScoped<IAccountService, InMemoryAccountService>();
 
-// --- FIXED: ADDED AUTHENTICATION SERVICES ENGINE ---
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -36,11 +34,13 @@ builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 
-// Async database generation migration to prevent Blazor dependency routing race conditions
-await System.Threading.Tasks.Task.Run(async () =>
+// Stable database generator execution block
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+    using var dbContext = factory.CreateDbContext();
+    dbContext.Database.EnsureCreated();
+}
     using var dbContext = await factory.CreateDbContextAsync();
     await dbContext.Database.EnsureCreatedAsync();
     // Ensure Goals table exists for older databases or when EF migrations are not used
@@ -77,11 +77,10 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-// Order matters: authentication must run before authorization.
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Logout endpoint: clears the auth cookie and returns to the login page.
+// Logout endpoint
 app.MapPost("/Account/Logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -94,7 +93,6 @@ app.MapPost("/Account/Logout", async (HttpContext context) =>
 app.MapRazorComponents<BudgetAndExpenseTracker.Components.App>()
     .AddInteractiveServerRenderMode();
 
-// Use the IEndpointRouteBuilder interface on 'app' to scan the final compiled routing graph
 var endpointSources = ((IEndpointRouteBuilder)app).DataSources;
 foreach (var dataSource in endpointSources)
 {
