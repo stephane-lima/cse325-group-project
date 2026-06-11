@@ -12,12 +12,12 @@ using BudgetAndExpenseTracker.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // ==========================================
-// 1. SERVICES REGISTRATION STAGE
+// SERVICES
 // ==========================================
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents(); 
 
-// Fixed Factory Registration to use your actual appsettings key name
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDatabase")));
 
@@ -34,38 +34,21 @@ builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 
-// Stable database generator execution block
+// ==========================================
+// DATABASE INIT
+// ==========================================
+
 using (var scope = app.Services.CreateScope())
 {
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
     using var dbContext = factory.CreateDbContext();
+
     dbContext.Database.EnsureCreated();
 }
-    using var dbContext = await factory.CreateDbContextAsync();
-    await dbContext.Database.EnsureCreatedAsync();
-    // Ensure Goals table exists for older databases or when EF migrations are not used
-    // var createGoalsSql = @"CREATE TABLE IF NOT EXISTS Goals (
-    //         Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    //         Name TEXT NOT NULL,
-    //         TargetAmount REAL NOT NULL,
-    //         SavedAmount REAL NOT NULL,
-    //         TargetDate TEXT NOT NULL,
-    //         UserId TEXT NOT NULL
-    //     );";
 
-    // await dbContext.Database.ExecuteSqlRawAsync(createGoalsSql);
-
-    // Seed initial goals if none exist
-    // if (!await dbContext.Goals.AnyAsync())
-    // {
-    //     dbContext.Goals.AddRange(
-    //         new Goal { Name = "Emergency Fund", TargetAmount = 3000m, SavedAmount = 650m, TargetDate = DateTime.Today.AddMonths(6) },
-    //         new Goal { Name = "New Laptop", TargetAmount = 1200m, SavedAmount = 300m, TargetDate = DateTime.Today.AddMonths(3) }
-    //     );
-    //     await dbContext.SaveChangesAsync();
-    //     Console.WriteLine("[SEED] Inserted initial goals into Goals table.");
-    // }
-});
+// ==========================================
+// MIDDLEWARE
+// ==========================================
 
 if (!app.Environment.IsDevelopment())
 {
@@ -88,19 +71,23 @@ app.MapPost("/Account/Logout", async (HttpContext context) =>
 });
 
 // ==========================================
-// 2. ENDPOINT MAPPING & DIAGNOSTICS STAGE
+// ROUTING
 // ==========================================
+
 app.MapRazorComponents<BudgetAndExpenseTracker.Components.App>()
     .AddInteractiveServerRenderMode();
 
+// Debug route logging
 var endpointSources = ((IEndpointRouteBuilder)app).DataSources;
+
 foreach (var dataSource in endpointSources)
 {
     foreach (var endpoint in dataSource.Endpoints)
     {
-        if (endpoint is RouteEndpoint routeEndpoint && routeEndpoint.RoutePattern.RawText == "/")
+        if (endpoint is RouteEndpoint routeEndpoint &&
+            routeEndpoint.RoutePattern.RawText == "/")
         {
-            Console.WriteLine($"[ROUTING DEBUG] Found root endpoint mapped to: {routeEndpoint.DisplayName}");
+            Console.WriteLine($"[ROUTING DEBUG] Root endpoint: {routeEndpoint.DisplayName}");
         }
     }
 }
