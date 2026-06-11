@@ -1,6 +1,5 @@
 @page "/goals"
 @layout Layout.MainLayout
-@attribute [Authorize]
 @rendermode InteractiveServer
 
 @using System.ComponentModel.DataAnnotations
@@ -136,6 +135,83 @@
 		</div>
 	</div>
 </div>
+
+@*<div class="dashboard-container">
+	<div class="workspace-grid">
+		<div class="data-card">
+			<h2 class="section-title">Create a New Goal</h2>
+
+			<EditForm Model="newGoal" OnValidSubmit="AddGoal">
+				<div class="form-group">
+					<label class="form-label">Goal Name</label>
+					<InputText class="form-control" @bind-Value="newGoal.Name" />
+					<ValidationMessage For="() => newGoal.Name" class="validation-message" />
+				</div>
+
+				<div class="form-group form-group-row">
+					<div>
+						<label class="form-label">Target Amount</label>
+						<InputNumber class="form-control" @bind-Value="newGoal.TargetAmount" />
+						<ValidationMessage For="() => newGoal.TargetAmount" class="validation-message" />
+					</div>
+					<div>
+						<label class="form-label">Target Date</label>
+						<InputDate class="form-control" @bind-Value="newGoal.TargetDate" />
+						<ValidationMessage For="() => newGoal.TargetDate" class="validation-message" />
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label class="form-label">Starting Saved Amount</label>
+					<InputNumber class="form-control" @bind-Value="newGoal.SavedAmount" />
+				</div>
+
+				<button type="submit" class="btn-submit">Add Goal</button>
+			</EditForm>
+		</div>
+
+		<div class="data-card">
+			<h2 class="section-title">Your Goals</h2>
+
+			@if (!goals.Any())
+			{
+				<div class="empty-text">You have no goals yet — add one using the form.</div>
+			}
+
+			<div class="goals-grid">
+				@foreach (var g in goals)
+				{
+					<div class="goal-progress-box">
+						<div class="goal-meta">
+							<div>
+								<div class="goal-name">@g.Name</div>
+								<div class="goal-numbers">Target @g.TargetAmount.ToString("C") • Due @g.TargetDate.ToShortDateString()</div>
+							</div>
+							<div style="text-align: right;">
+								<div class="goal-pct">@GetPercent(g) %</div>
+								<div class="goal-numbers">Saved @g.SavedAmount.ToString("C")</div>
+							</div>
+						</div>
+
+						<div class="progress-bar-container" style="margin: .75rem 0;">
+							<div class="progress-fill" style="width: @GetPercent(g)%"></div>
+						</div>
+
+						<div class="form-group-row" style="margin-top: .5rem; align-items: center;">
+							<div>
+								<input class="form-control" type="number" step="0.01" @bind="gEditAmounts[g.Id]" placeholder="Add amount" />
+							</div>
+							<div style="display:flex; gap:.5rem;">
+								<button class="btn-submit" @onclick="() => AddToSaved(g)">Add Funds</button>
+								<button class="btn-delete" @onclick="() => RemoveGoal(g)">🗑️</button>
+							</div>
+						</div>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+</div> *@
 
 @code {
 	private List<Goal> goals = new();
