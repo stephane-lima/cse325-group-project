@@ -7,3 +7,6 @@ obj/
 *.db-shm
 *.db-wal
 budget_tracker_records.db
+
+# Ensure the database baseline gets tracked for cloud hosting deployment
+!budget_tracker_records.db
