@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +20,12 @@ builder.Services.AddRazorComponents()
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDatabase")));
 
-builder.Services.AddScoped<IAccountService, InMemoryAccountService>();
+// FIX #1 (LOGIN BUG): Must be Singleton, not Scoped.
+// InMemoryAccountService stores users in an in-memory dictionary. With AddScoped,
+// a NEW (empty) instance was created for every HTTP request, so accounts created
+// on the Register page no longer existed when the Login page posted.
+// Only the demo account worked because it is re-seeded in the constructor.
+builder.Services.AddSingleton<IAccountService, InMemoryAccountService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -33,6 +38,7 @@ builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 
+<<<<<<< HEAD
 // ==========================================
 // 2. DATABASE INITIALIZATION STAGE
 // ==========================================
@@ -51,6 +57,14 @@ using (var scope = app.Services.CreateScope())
     {
         Console.WriteLine($"[DB FATAL ERROR] Initialization failed: {ex.Message}");
     }
+=======
+// Stable database generator execution block
+using (var scope = app.Services.CreateScope())
+{
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+    using var dbContext = factory.CreateDbContext();
+    dbContext.Database.EnsureCreated();
+>>>>>>> 6b45db24c2225aed645ae596c5e79029892c4a5b
 }
 
 // ==========================================
@@ -64,10 +78,14 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseAntiforgery();
 
+// FIX #2 (MIDDLEWARE ORDER): UseAntiforgery must run AFTER
+// UseAuthentication/UseAuthorization (ASP.NET Core requirement).
+// The previous order could make the antiforgery token validation on the
+// login/register form POSTs unreliable.
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
 // Logout endpoint
 app.MapPost("/Account/Logout", async (HttpContext context) =>

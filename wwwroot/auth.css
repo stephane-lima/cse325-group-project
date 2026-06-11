@@ -172,3 +172,25 @@
         padding: 1.5rem;
     }
 }
+
+/* ==========================================================================
+   FIX #4 (MOBILE AUTH PAGES)
+   The Login/Register markup uses inline styles (padding: 2.5rem etc.) which
+   override the rules above, so !important is required here. Tightens the
+   card and section padding on small phones so the form isn't cramped.
+   ========================================================================== */
+@media (max-width: 480px) {
+    .auth-page {
+        padding: 1rem 0.75rem !important;
+        min-height: calc(100vh - 7rem) !important;
+    }
+
+    .auth-card {
+        padding: 1.5rem 1.25rem !important;
+        border-radius: 12px !important;
+    }
+
+    .auth-card__title {
+        font-size: 1.4rem !important;
+    }
+}
