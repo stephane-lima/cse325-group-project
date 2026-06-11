@@ -60,3 +60,14 @@ builder.Services.AddSingleton<IAccountService, InMemoryAccountService>();
 ```
 
 No changes to `Login.razor` / `Register.razor` are required.
+
+
+## Web application site
+https://budget-and-expense-tracker.onrender.com
+
+
+### 1. CRUD Implementation
+* **Create:** Users can record transactional data, capturing descriptions, decimal amounts, tracking dates, and financial types (Income/Expense).
+* **Read:** Financial data aggregates automatically into a historical ledger and dynamic components, mapping data directly to an interactive **Net Savings Data Chart**
+* **Update & Delete:** Built-in table event handlers bind directly to an internal `DeleteTransactionAsync` safety pipeline to ensure seamless ledger adjustments and synchronized dashboard refreshes.
+
