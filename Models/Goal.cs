@@ -25,4 +25,6 @@ public class Goal
     public DateTime TargetDate { get; set; } = DateTime.Today.AddMonths(1);
 
     public string UserId { get; set; } = "1";
+
+    // public string Status { get; set; } = "On Track";
 }
