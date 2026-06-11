@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using BudgetAndExpenseTracker.Data;
+using BudgetAndExpenseTracker.Models;
 using BudgetAndExpenseTracker.Components;
 using BudgetAndExpenseTracker.Services;
 
@@ -40,6 +41,31 @@ using (var scope = app.Services.CreateScope())
     using var dbContext = factory.CreateDbContext();
     dbContext.Database.EnsureCreated();
 }
+    using var dbContext = await factory.CreateDbContextAsync();
+    await dbContext.Database.EnsureCreatedAsync();
+    // Ensure Goals table exists for older databases or when EF migrations are not used
+    // var createGoalsSql = @"CREATE TABLE IF NOT EXISTS Goals (
+    //         Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    //         Name TEXT NOT NULL,
+    //         TargetAmount REAL NOT NULL,
+    //         SavedAmount REAL NOT NULL,
+    //         TargetDate TEXT NOT NULL,
+    //         UserId TEXT NOT NULL
+    //     );";
+
+    // await dbContext.Database.ExecuteSqlRawAsync(createGoalsSql);
+
+    // Seed initial goals if none exist
+    // if (!await dbContext.Goals.AnyAsync())
+    // {
+    //     dbContext.Goals.AddRange(
+    //         new Goal { Name = "Emergency Fund", TargetAmount = 3000m, SavedAmount = 650m, TargetDate = DateTime.Today.AddMonths(6) },
+    //         new Goal { Name = "New Laptop", TargetAmount = 1200m, SavedAmount = 300m, TargetDate = DateTime.Today.AddMonths(3) }
+    //     );
+    //     await dbContext.SaveChangesAsync();
+    //     Console.WriteLine("[SEED] Inserted initial goals into Goals table.");
+    // }
+});
 
 if (!app.Environment.IsDevelopment())
 {
