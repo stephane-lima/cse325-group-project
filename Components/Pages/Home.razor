@@ -7,12 +7,13 @@
 @using Microsoft.EntityFrameworkCore
 
 @inject IDbContextFactory<AppDbContext> DbFactory
+@inject IJSRuntime JS
 
 <PageTitle>Dashboard - Budget & Expense Tracker</PageTitle>
 
-<div class="dashboard-container container mt-4 mb-5">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    @* Elegant Header Title Block *@
+<div class="dashboard-container container mt-4 mb-5">
     <div class="row mb-4">
         <div class="col-12 text-center text-md-start d-md-flex align-items-center justify-content-between p-4 bg-white rounded shadow-sm border-start border-primary border-4">
             <div>
@@ -27,7 +28,6 @@
         </div>
     </div>
 
-    @* Financial Metrics Summary Display Cards *@
     <section class="row text-center mb-4">
         <div class="col-md-4 mb-3">
             <div class="card h-100 border-0 shadow-sm bg-white border-bottom border-primary border-4 rounded-top">
@@ -60,7 +60,25 @@
         </div>
     </section>
 
-    @* Recent Ledger List Data View Table *@
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm p-4 h-100 bg-white rounded-3">
+                <h4 class="fw-bold text-dark mb-3" style="font-size: 1.2rem;">📊 Income vs Expenses Cash Flow</h4>
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="cashFlowCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm p-4 h-100 bg-white rounded-3">
+                <h4 class="fw-bold text-dark mb-3" style="font-size: 1.2rem;">📈 Net Savings Accumulation Profile</h4>
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="savingsTimelineCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm p-4 rounded-3">
@@ -136,6 +154,11 @@
         await RefreshDashboardDataAsync();
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await RenderChartsViaEvalAsync();
+    }
+
     private async Task RefreshDashboardDataAsync()
     {
         using var context = await DbFactory.CreateDbContextAsync();
@@ -151,6 +174,95 @@
             .ToList();
     }
 
+    private async Task RenderChartsViaEvalAsync()
+    {
+        try
+        {
+            using var context = await DbFactory.CreateDbContextAsync();
+            var chronologicalTransactions = await context.Transactions
+                .OrderBy(t => t.Date)
+                .ToListAsync();
+
+            var savingsLabels = new List<string> { "Start" };
+            var savingsData = new List<decimal> { 0.00m };
+            decimal runningCumulativeSavings = 0.00m;
+
+            foreach (var tx in chronologicalTransactions)
+            {
+                if (tx.Type.ToLower() == "income")
+                    runningCumulativeSavings += tx.NumericAmount;
+                else if (tx.Type.ToLower() == "expense")
+                    runningCumulativeSavings -= tx.NumericAmount;
+
+                savingsLabels.Add(tx.Date);
+                savingsData.Add(runningCumulativeSavings);
+            }
+
+            var labelsJson = System.Text.Json.JsonSerializer.Serialize(savingsLabels);
+            var dataJson = System.Text.Json.JsonSerializer.Serialize(savingsData);
+
+            var jsCode = $@"
+                (function() {{
+                    if (typeof Chart === 'undefined') return;
+
+                    if (window.myCashFlowChart instanceof Chart) window.myCashFlowChart.destroy();
+                    if (window.mySavingsChart instanceof Chart) window.mySavingsChart.destroy();
+
+                    var ctx1 = document.getElementById('cashFlowCanvas');
+                    if (ctx1) {{
+                        window.myCashFlowChart = new Chart(ctx1, {{
+                            type: 'bar',
+                            data: {{
+                                labels: ['Incomes', 'Expenses'],
+                                datasets: [{{
+                                    label: 'Total Valuation ($)',
+                                    data: [{TotalIncome}, {TotalExpenses}],
+                                    backgroundColor: ['#10b981', '#ef4444'],
+                                    borderRadius: 6
+                                }}]
+                            }},
+                            options: {{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {{ legend: {{ display: false }} }}
+                            }}
+                        }});
+                    }}
+
+                    var ctx2 = document.getElementById('savingsTimelineCanvas');
+                    if (ctx2) {{
+                        window.mySavingsChart = new Chart(ctx2, {{
+                            type: 'line',
+                            data: {{
+                                labels: {labelsJson},
+                                datasets: [{{
+                                    label: 'Savings Balance Accumulation ($)',
+                                    data: {dataJson},
+                                    borderColor: '#3b82f6',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                                    fill: true,
+                                    tension: 0.15,
+                                    borderWidth: 3
+                                }}]
+                            }},
+                            options: {{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {{ y: {{ beginAtZero: true }} }}
+                            }}
+                        }});
+                    }}
+                }})();
+            ";
+
+            await JS.InvokeVoidAsync("eval", jsCode);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CHART ENGINE ERROR] Failed execution runtime sequence: {ex.Message}");
+        }
+    }
+
     private async Task DeleteTransactionAsync(int id)
     {
         using var context = await DbFactory.CreateDbContextAsync();
@@ -160,6 +272,7 @@
             context.Transactions.Remove(item);
             await context.SaveChangesAsync();
             await RefreshDashboardDataAsync();
+            StateHasChanged();
         }
     }
 }
