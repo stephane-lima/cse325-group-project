@@ -35,14 +35,35 @@ builder.Services.AddCascadingAuthenticationState();
 var app = builder.Build();
 
 // Stable database generator execution block
-using (var scope = app.Services.CreateScope())
+// using (var scope = app.Services.CreateScope())
+// {
+//     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+//     using var dbContext = await factory.CreateDbContextAsync();
+//     await dbContext.Database.EnsureCreatedAsync();
+//     // using var dbContext = factory.CreateDbContext();
+//     // dbContext.Database.EnsureCreated();
+// }
+
+await System.Threading.Tasks.Task.Run(async () =>
 {
+    using var scope = app.Services.CreateScope();
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
-    using var dbContext = factory.CreateDbContext();
-    dbContext.Database.EnsureCreated();
-}
     using var dbContext = await factory.CreateDbContextAsync();
     await dbContext.Database.EnsureCreatedAsync();
+    // var createGoalsSql = @"CREATE TABLE IF NOT EXISTS Goals (
+    //         Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    //         Name TEXT NOT NULL,
+    //         TargetAmount REAL NOT NULL,
+    //         SavedAmount REAL NOT NULL,
+    //         TargetDate TEXT NOT NULL,
+    //         Status TEXT NOT NULL,
+    //         UserId TEXT NOT NULL
+    //     );";
+
+    // await dbContext.Database.ExecuteSqlRawAsync(createGoalsSql);
+});
+    // using var dbContext = await factory.CreateDbContextAsync();
+    // await dbContext.Database.EnsureCreatedAsync();
     // Ensure Goals table exists for older databases or when EF migrations are not used
     // var createGoalsSql = @"CREATE TABLE IF NOT EXISTS Goals (
     //         Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,7 +86,7 @@ using (var scope = app.Services.CreateScope())
     //     await dbContext.SaveChangesAsync();
     //     Console.WriteLine("[SEED] Inserted initial goals into Goals table.");
     // }
-});
+// });
 
 if (!app.Environment.IsDevelopment())
 {
