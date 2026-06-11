@@ -1,56 +1,59 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager Nav
 
-<div class="app-shell">
-    <div class="sidebar-wrapper">
-        <div>
-            <NavMenu />
-        </div>
-
-        <div class="sidebar-profile">
-            <span class="profile-avatar">👤</span>
-            <div class="profile-info">
-                <span class="profile-name">Stephanie S.</span>
-                <span class="profile-role">Account Owner</span>
-            </div>
-        </div>
+<div class="page" style="background-color: #f4f7f6; min-height: 100vh; display: flex;">
+    @* SIDENAV BAR (BRAND TEXT REMOVED) *@
+    <div class="sidebar d-flex flex-column p-3" style="background-color: #e8f5e9; width: 260px; min-height: 100vh; border-right: 1px solid #d4ede1;">
+        <nav class="nav flex-column gap-2 flex-grow-1 mt-3">
+            <a class="nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded fw-bold text-success bg-success bg-opacity-10 border border-success border-opacity-10 shadow-sm" href="/">
+                📋 <span style="font-size: 0.95rem;">Dashboard</span>
+            </a>
+            <a class="nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded fw-semibold text-secondary" style="transition: all 0.2s;" href="/transactions">
+                💳 <span style="font-size: 0.95rem;">Transactions</span>
+            </a>
+            <a class="nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded fw-semibold text-secondary" style="transition: all 0.2s;" href="/goals">
+                🎯 <span style="font-size: 0.95rem;">Financial Goals</span>
+            </a>
+        </nav>
     </div>
 
-    <main class="main-workspace">
-        <header class="workspace-header">
-            <div style="display: flex; align-items: center;">
-                <span class="badge-live">LIVE</span>
-                <span class="header-subtitle">Monitoring spending</span>
+    @* MAIN PANELS *@
+    <main class="flex-grow-1 p-4 d-flex flex-column" style="overflow-x: hidden;">
+        @* TOP UTILITY HEADER (USER NAME & LOGOUT SHIFTED HERE) *@
+        <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom" style="border-color: #e2e8f0 !important;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success px-2 py-1 text-uppercase tracking-wider font-monospace" style="font-size: 0.65rem;">LIVE</span>
+                <small class="text-muted fw-medium" style="font-size: 0.8rem;">Monitoring spending and dynamic balances</small>
             </div>
-
-            <div class="header-profile-section">
-                <button class="icon-notification-btn">
-                    🔔
-                    <span class="notification-indicator"></span>
-                </button>
-                <div class="profile-divider"></div>
-                
+            
+            @* DYNAMIC ACCOUNT CONTROL IN TOP RIGHT *@
+            <div class="d-flex align-items-center gap-3">
                 <AuthorizeView>
                     <Authorized>
-                        <div class="profile-badge">SS</div>
-                        <span class="profile-name" style="margin-right: 10px;">@context.User.Identity?.Name</span>
-                        <form action="Account/Logout" method="post" style="margin: 0; display: inline;">
-                            <AntiforgeryToken />
-                            <button type="submit" class="auth-action-link" style="background: none; border: none; font-size: 0.85rem; font-weight: 700; color: #dc2626; cursor: pointer; padding: 0;">
-                                Log Out 🚪
-                            </button>
-                        </form>
+                        <div class="d-flex align-items-center gap-2 bg-white px-3 py-1.5 rounded shadow-sm border border-success border-opacity-25">
+                            <span class="fw-semibold text-dark me-2" style="font-size: 0.9rem;">👤 @context.User.Identity?.Name</span>
+                            <form action="Account/Logout" method="post" class="m-0 p-0 d-inline">
+                                <AntiforgeryToken />
+                                <button type="submit" class="btn btn-sm btn-danger px-2 py-0.5 fw-bold" style="font-size: 0.75rem; border-radius: 4px;">
+                                    Sign Out
+                                </button>
+                            </form>
+                        </div>
                     </Authorized>
-                    <NotAuthorized>
-                        <a href="login" class="auth-action-link" style="font-size: 0.85rem; font-weight: 700; text-decoration: none; color: #065f46;">
-                            🔑 System Login
-                        </a>
-                    </NotAuthorized>
                 </AuthorizeView>
+                <span class="text-muted ms-2" style="cursor: pointer;" title="Notifications">🔔</span>
             </div>
-        </header>
-
-        <div class="content-body">
-            @Body
         </div>
+
+        <article class="content flex-grow-1">
+            @Body
+        </article>
     </main>
 </div>
+
+<style>
+    .nav-link.text-secondary:hover {
+        background-color: rgba(25, 135, 84, 0.05) !important;
+        color: #14532d !important;
+    }
+</style>
