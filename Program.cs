@@ -17,11 +17,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(); 
 
-// Fixed Factory Registration to use your actual appsettings key name
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDatabase")));
 
-builder.Services.AddScoped<IAccountService, InMemoryAccountService>();
+builder.Services.AddSingleton<IAccountService, InMemoryAccountService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -34,8 +33,9 @@ builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 
-// Stable database generator execution block
-// Stable database generator execution block with Linux Directory Guards
+// ==========================================
+// 2. DATA LAYER MIGRATION & GUARD CHECKS
+// ==========================================
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -53,6 +53,9 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// ==========================================
+// 3. MIDDLEWARE & PROCESSING PIPELINE STAGE
+// ==========================================
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -66,7 +69,6 @@ app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Logout endpoint
 app.MapPost("/Account/Logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -74,7 +76,7 @@ app.MapPost("/Account/Logout", async (HttpContext context) =>
 });
 
 // ==========================================
-// 2. ENDPOINT MAPPING & DIAGNOSTICS STAGE
+// 4. ENDPOINT MAPPING & DIAGNOSTICS STAGE
 // ==========================================
 app.MapRazorComponents<BudgetAndExpenseTracker.Components.App>()
     .AddInteractiveServerRenderMode();
