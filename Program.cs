@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +20,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDatabase")));
 
-builder.Services.AddScoped<IAccountService, InMemoryAccountService>();
+builder.Services.AddSingleton<IAccountService, InMemoryAccountService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -34,7 +34,7 @@ builder.Services.AddCascadingAuthenticationState();
 var app = builder.Build();
 
 // ==========================================
-// 2. DATABASE INITIALIZATION STAGE
+// 2. DATA LAYER MIGRATION & GUARD CHECKS
 // ==========================================
 using (var scope = app.Services.CreateScope())
 {
@@ -70,8 +70,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// ========================================== 
-// 3. MIDDLEWARE PIPELINE STAGE
+// ==========================================
+// 3. MIDDLEWARE & PROCESSING PIPELINE STAGE
 // ==========================================
 if (!app.Environment.IsDevelopment())
 {
@@ -86,7 +86,6 @@ app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Logout endpoint
 app.MapPost("/Account/Logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -94,7 +93,7 @@ app.MapPost("/Account/Logout", async (HttpContext context) =>
 });
 
 // ==========================================
-// 4. ROUTING & DIAGNOSTICS STAGE
+// 4. ENDPOINT MAPPING & DIAGNOSTICS STAGE
 // ==========================================
 app.MapRazorComponents<BudgetAndExpenseTracker.Components.App>()
     .AddInteractiveServerRenderMode();
@@ -113,4 +112,3 @@ foreach (var dataSource in endpointSources)
 }
 
 app.Run();
-
