@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. SERVICES REGISTRATION STAGE
 // ==========================================
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents(); 
+    .AddInteractiveServerComponents();
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDatabase")));
@@ -43,9 +43,26 @@ using (var scope = app.Services.CreateScope())
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
         using var dbContext = factory.CreateDbContext();
         
-        Console.WriteLine("[DB INITIALIZATION] Forcing SQLite creation check...");
+        Console.WriteLine("[DB INITIALIZATION] Verifying SQLite structures...");
         dbContext.Database.EnsureCreated();
-        Console.WriteLine("[DB INITIALIZATION] Database verification successful!");
+
+        // Safe Fallback: Force creation of the Goals table if it's missing from old schemas
+        var createGoalsSql = @"
+            CREATE TABLE IF NOT EXISTS Goals (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL,
+                TargetAmount REAL NOT NULL,
+                SavedAmount REAL NOT NULL,
+                TargetDate TEXT NOT NULL,
+                UserId TEXT NOT NULL
+            );";
+        
+        using var command = dbContext.Database.GetDbConnection().CreateCommand();
+        command.CommandText = createGoalsSql;
+        dbContext.Database.OpenConnection();
+        command.ExecuteNonQuery();
+        
+        Console.WriteLine("[DB INITIALIZATION] Database and table structures verified successfully!");
     }
     catch (Exception ex)
     {
@@ -81,6 +98,7 @@ app.MapPost("/Account/Logout", async (HttpContext context) =>
 app.MapRazorComponents<BudgetAndExpenseTracker.Components.App>()
     .AddInteractiveServerRenderMode();
 
+// Debug route logging
 var endpointSources = ((IEndpointRouteBuilder)app).DataSources;
 foreach (var dataSource in endpointSources)
 {
@@ -88,7 +106,7 @@ foreach (var dataSource in endpointSources)
     {
         if (endpoint is RouteEndpoint routeEndpoint && routeEndpoint.RoutePattern.RawText == "/")
         {
-            Console.WriteLine($"[ROUTING DEBUG] Found root endpoint mapped to: {routeEndpoint.DisplayName}");
+            Console.WriteLine($"[ROUTING DEBUG] Root endpoint: {routeEndpoint.DisplayName}");
         }
     }
 }
