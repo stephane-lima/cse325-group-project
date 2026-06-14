@@ -4,6 +4,8 @@
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
 @using BudgetAndExpenseTracker.Services
+@using BudgetAndExpenseTracker.Models
+
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
 
@@ -79,7 +81,7 @@
     {
         if (Input is null) return;
 
-        var user = AccountService.ValidateCredentials(Input.Email, Input.Password);
+        var user = await AccountService.ValidateCredentialsAsync(Input.Email, Input.Password);
         if (user is null)
         {
             _errorMessage = "Invalid email or password. Please try again.";

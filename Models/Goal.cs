@@ -24,5 +24,13 @@ public class Goal
     [Required]
     public DateTime TargetDate { get; set; } = DateTime.Today.AddMonths(1);
 
-    public string UserId { get; set; } = "1";
+    public DateTime? CompletedDate { get; set; }
+
+    // [NotMapped]
+    // public string Status => SavedAmount >= TargetAmount ? "Completed" : "On Track";
+
+    [NotMapped]
+    public bool IsCompleted => TargetAmount > 0 && SavedAmount >= TargetAmount;
+
+    public string UserId { get; set; } = string.Empty;
 }

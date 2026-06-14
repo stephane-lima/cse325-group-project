@@ -5,8 +5,10 @@
 @using BudgetAndExpenseTracker.Models
 @using BudgetAndExpenseTracker.Data
 @using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
 
 @inject IDbContextFactory<AppDbContext> DbFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Manage Transactions</PageTitle>
 
@@ -111,27 +113,35 @@
 
 @code {
     private List<Transaction> TransactionsList = new();
+    private string? userId;
     private Transaction NewTransaction = new() { Type = "Expense", Category = "Food / Groceries", Date = DateTime.Now.ToString("yyyy-MM-dd") };
+    @* private string? userId; *@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        userId = authState.User
+            .FindFirst(ClaimTypes.NameIdentifier)?
+            .Value;
+        
         await LoadTransactionsAsync();
     }
 
     private async Task LoadTransactionsAsync()
     {
         using var context = await DbFactory.CreateDbContextAsync();
-        TransactionsList = await context.Transactions.OrderByDescending(t => t.Date).ToListAsync();
+        TransactionsList = await context.Transactions.Where(t => t.UserId == userId).OrderByDescending(t => t.Date).ToListAsync();
     }
 
     private async Task HandleValidSubmitAsync()
     {
+        NewTransaction.UserId = userId!;
         using var context = await DbFactory.CreateDbContextAsync();
         context.Transactions.Add(NewTransaction);
         await context.SaveChangesAsync();
         
         // Reset state object
-        NewTransaction = new() { Type = "Expense", Category = "Food / Groceries", Date = DateTime.Now.ToString("yyyy-MM-dd") };
+        NewTransaction = new() { Type = "Expense", Category = "Food / Groceries", Date = DateTime.Now.ToString("yyyy-MM-dd"), UserId = userId! };
         await LoadTransactionsAsync();
     }
 

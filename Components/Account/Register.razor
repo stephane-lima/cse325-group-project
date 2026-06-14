@@ -4,6 +4,8 @@
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
 @using BudgetAndExpenseTracker.Services
+@using BudgetAndExpenseTracker.Data
+@using BudgetAndExpenseTracker.Models
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
 
@@ -77,14 +79,14 @@
     {
         if (Input is null) return;
 
-        var (success, error) = AccountService.Register(Input.Email, Input.DisplayName, Input.Password);
+        (bool success, string? error) = await AccountService.RegisterAsync(Input.Email, Input.DisplayName, Input.Password);
         if (!success)
         {
             _errorMessage = error;
             return;
         }
 
-        var user = AccountService.ValidateCredentials(Input.Email, Input.Password)!;
+        var user = await AccountService.ValidateCredentialsAsync(Input.Email, Input.Password)!;
         var principal = AccountService.BuildPrincipal(user);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 

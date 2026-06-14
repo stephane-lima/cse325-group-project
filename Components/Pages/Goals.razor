@@ -7,11 +7,13 @@
 @using BudgetAndExpenseTracker.Models
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
 
 @* 🔒 SECURITY GUARD: Protects this page from unauthenticated rogue requests *@
 @attribute [Authorize]
 
 @inject IDbContextFactory<AppDbContext> DbFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Financial Goals</PageTitle>
 
@@ -38,8 +40,8 @@
     <div class="col-md-4 mb-3">
         <div class="card h-100 border-0 shadow-sm bg-white border-bottom border-primary border-4 rounded-top">
             <div class="card-body p-4 d-flex flex-column justify-content-between">
-                <span class="fs-6 text-muted text-uppercase fw-bold tracking-wider">Total Goals</span>
-                <h2 class="display-6 fw-bold text-primary my-3">@goals.Count</h2>
+                <span class="fs-6 text-muted text-uppercase fw-bold tracking-wider">Current Goals</span>
+                <h2 class="display-6 fw-bold text-primary my-3">@ActiveGoals.Count</h2>
                 <small class="text-muted">All your financial goals!</small>
             </div>
         </div>
@@ -110,19 +112,56 @@
                     <button type="submit" class="btn btn-primary w-100 mt-2">Add Goal</button>
                 </EditForm>
             </div>
+
+            <div class="card p-4 shadow-sm mt-4">
+                <h3>Completed Goals</h3>
+
+                @if (!CompletedGoals.Any())
+                {
+                    <div class="empty-text">You have no completed goals yet.</div>
+                }
+
+                <div class="goals-grid">
+                    @foreach (var g in CompletedGoals)
+                    {
+                        <div class="goal-progress-box">
+                            <div class="goal-meta">
+                                <div>
+                                    <div class="goal-name">@g.Name</div>
+                                    <div class="goal-numbers">Target $@g.TargetAmount.ToString("N2")</div>
+                                    <div class="goal-numbers">Completed @g.CompletedDate?.ToShortDateString()</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div class="goal-pct">Completed</div>
+                                    <div class="goal-numbers">Saved $@g.SavedAmount.ToString("N2")</div>
+                                </div>
+                            </div>
+
+                            <div class="progress-bar-container" style="margin: .75rem 0;">
+                                <div class="progress-fill" style="width: @GetPercent(g)%"></div>
+                            </div>
+                            @* <div style="display:flex; gap:.5rem;">
+                                <button class="btn-submit" @onclick="() => AddToSaved(g)">Add Funds</button>
+                                <button class="btn-submit" @onclick="() => RemoveFromSaved(g)">Remove Funds</button>
+                                <button class="btn-delete" @onclick="() => RemoveGoal(g)">🗑️</button>
+                            </div> *@
+                        </div>
+                    }
+                </div> 
+            </div>
         </div>
 
         <div class="col-md-7">
             <div class="card p-4 shadow-sm">
-                <h3>Your Goals</h3>
+                <h3>Current Goals</h3>
 
-                @if (!goals.Any())
+                @if (!ActiveGoals.Any())
                 {
                     <div class="empty-text">You have no goals yet — add one using the form.</div>
                 }
 
                 <div class="goals-grid">
-                    @foreach (var g in goals)
+                    @foreach (var g in ActiveGoals)
                     {
                         <div class="goal-progress-box">
                             <div class="goal-meta">
@@ -156,6 +195,39 @@
                 </div>
             </div>
         </div>
+        @* <div class="col-md-5 mb-4">
+            <div class="card p-4 shadow-sm">
+                <h3>Completed Goals</h3>
+
+                @if (!CompletedGoals.Any())
+                {
+                    <div class="empty-text">You have no completed goals yet.</div>
+                }
+
+                <div class="goals-grid">
+                    @foreach (var g in CompletedGoals)
+                    {
+                        <div class="goal-progress-box">
+                            <div class="goal-meta">
+                                <div>
+                                    <div class="goal-name">@g.Name</div>
+                                    <div class="goal-numbers">Target $@g.TargetAmount.ToString("N2")</div>
+                                    <div class="goal-numbers">Due @g.TargetDate.ToShortDateString()</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div class="goal-pct">@GetPercent(g) %</div>
+                                    <div class="goal-numbers">Saved $@g.SavedAmount.ToString("N2")</div>
+                                </div>
+                            </div>
+
+                            <div class="progress-bar-container" style="margin: .75rem 0;">
+                                <div class="progress-fill" style="width: @GetPercent(g)%"></div>
+                            </div>
+                        </div>
+                    }
+                </div> 
+            </div>
+        </div> *@
     </div>
 </div>
 
@@ -163,6 +235,12 @@
     private List<Goal> goals = new();
     private Goal newGoal = new() { TargetDate = DateTime.Today.AddMonths(1) };
     private Dictionary<int, decimal> gEditAmounts = new();
+
+    private List<Goal> ActiveGoals => goals.Where(g => !g.IsCompleted).ToList();
+
+    private List<Goal> CompletedGoals => goals.Where(g => g.IsCompleted).ToList();
+
+    private string? userId;
 
     private decimal TotalTarget;
     private decimal TotalSaved;
@@ -176,6 +254,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        userId = authState.User
+            .FindFirst(ClaimTypes.NameIdentifier)?
+            .Value;
+
         await LoadGoalsAsync();
     }
 
@@ -184,11 +267,11 @@
         try
         {
             using var db = await DbFactory.CreateDbContextAsync();
-            goals = await db.Goals.OrderByDescending(g => g.Id).ToListAsync();
+            goals = await db.Goals.Where(g => g.UserId == userId).OrderByDescending(g => g.Id).ToListAsync();
             gEditAmounts = goals.ToDictionary(g => g.Id, g => 0m);
             
-            TotalTarget = goals.Sum(x => x.TargetAmount);
-            TotalSaved = goals.Sum(x => x.SavedAmount);
+            TotalTarget = goals.Where(x => x.SavedAmount < x.TargetAmount).Sum(x => x.TargetAmount);
+            TotalSaved = goals.Where(x => x.SavedAmount < x.TargetAmount).Sum(x => x.SavedAmount);
             TotalRemaining = TotalTarget - TotalSaved;
             TotalSavedPercentage = (TotalTarget == 0) ? 0 : Math.Round((TotalSaved / TotalTarget) * 100, 2);
             TotalRemainingPercentage = 100 - TotalSavedPercentage;
@@ -210,7 +293,8 @@
                 Name = newGoal.Name?.Trim() ?? "Untitled Goal",
                 TargetAmount = newGoal.TargetAmount,
                 SavedAmount = newGoal.SavedAmount,
-                TargetDate = newGoal.TargetDate
+                TargetDate = newGoal.TargetDate,
+                UserId = userId!
             };
 
             using var db = await DbFactory.CreateDbContextAsync();
@@ -264,6 +348,12 @@
             if (entity == null) return;
             
             entity.SavedAmount += Math.Round(amt, 2);
+
+            if (entity.SavedAmount >= entity.TargetAmount && entity.CompletedDate == null)
+            {
+                entity.CompletedDate = DateTime.Now;
+            }
+
             await db.SaveChangesAsync();
             
             successMessage = $"Successfully deposited ${amt:N2} towards your objective!";

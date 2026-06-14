@@ -6,9 +6,11 @@
 @using BudgetAndExpenseTracker.Models
 @using BudgetAndExpenseTracker.Data
 @using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
 
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Dashboard - Budget & Expense Tracker</PageTitle>
 
@@ -152,9 +154,15 @@
     private decimal TotalBalance;
     private decimal TotalIncome;
     private decimal TotalExpenses;
+    private string? userId;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        userId = authState.User
+            .FindFirst(ClaimTypes.NameIdentifier)?
+            .Value;
+        
         await RefreshDashboardDataAsync();
     }
 
@@ -166,7 +174,7 @@
     private async Task RefreshDashboardDataAsync()
     {
         using var context = await DbFactory.CreateDbContextAsync();
-        var all = await context.Transactions.ToListAsync();
+        var all = await context.Transactions.Where(t => t.UserId == userId).ToListAsync();
 
         TotalIncome = all.Where(t => t.Type.ToLower() == "income").Sum(t => t.NumericAmount);
         TotalExpenses = all.Where(t => t.Type.ToLower() == "expense").Sum(t => t.NumericAmount);
@@ -184,6 +192,7 @@
         {
             using var context = await DbFactory.CreateDbContextAsync();
             var chronologicalTransactions = await context.Transactions
+                .Where(t => t.UserId == userId)
                 .OrderBy(t => t.Date)
                 .ToListAsync();
 

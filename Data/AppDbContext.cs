@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
 
     public DbSet<Transaction> Transactions { get; set; }
     public DbSet<Goal> Goals { get; set; }
+    public DbSet<ApplicationUser> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,8 +31,8 @@ public class AppDbContext : DbContext
         );
 
         modelBuilder.Entity<Goal>().HasData(
-            new Goal { Id = 1, Name = "Emergency Fund", TargetAmount = 3000m, SavedAmount = 650m, TargetDate = DateTime.Today.AddMonths(6) },
-            new Goal { Id = 2, Name = "New Laptop", TargetAmount = 1200m, SavedAmount = 300m, TargetDate = DateTime.Today.AddMonths(3) }
+            new Goal { Id = 1, Name = "Emergency Fund", TargetAmount = 3000m, SavedAmount = 650m, TargetDate = DateTime.Today.AddMonths(6), UserId = "1" },
+            new Goal { Id = 2, Name = "New Laptop", TargetAmount = 1200m, SavedAmount = 300m, TargetDate = DateTime.Today.AddMonths(3), UserId = "1" }
         );
     }
 }

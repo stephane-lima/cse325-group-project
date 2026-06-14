@@ -23,7 +23,7 @@ public class Transaction
     [Required]
     public string Date { get; set; } = DateTime.Today.ToString("yyyy-MM-dd");
 
-    public string UserId { get; set; } = "1";
+    public string UserId { get; set; } = string.Empty;
 
     [NotMapped]
     public decimal NumericAmount

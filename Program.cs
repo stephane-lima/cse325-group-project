@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +20,8 @@ builder.Services.AddRazorComponents()
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDatabase")));
 
-builder.Services.AddSingleton<IAccountService, InMemoryAccountService>();
+// builder.Services.AddSingleton<IAccountService, InMemoryAccountService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -46,23 +47,46 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("[DB INITIALIZATION] Verifying SQLite structures...");
         dbContext.Database.EnsureCreated();
 
+        // Create demo account if no users exist
+        if (!dbContext.Users.Any())
+        {
+            var accountService = scope.ServiceProvider.GetRequiredService<IAccountService>();
+
+            var result = await accountService.RegisterAsync(
+                "demo@budgettracker.com",
+                "Demo User",
+                "Password123!"
+            );
+
+            if (result.Success)
+            {
+                Console.WriteLine("[DB INITIALIZATION] Demo account created.");
+            }
+            else
+            {
+                Console.WriteLine($"[DB INITIALIZATION] Failed to create demo account: {result.Error}");
+            }
+        }
+
         // Safe Fallback: Force creation of the Goals table if it's missing from old schemas
-        var createGoalsSql = @"
-            CREATE TABLE IF NOT EXISTS Goals (
-                Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                Name TEXT NOT NULL,
-                TargetAmount REAL NOT NULL,
-                SavedAmount REAL NOT NULL,
-                TargetDate TEXT NOT NULL,
-                UserId TEXT NOT NULL
-            );";
+        // var createGoalsSql = @"
+        //     CREATE TABLE IF NOT EXISTS Goals (
+        //         Id INTEGER PRIMARY KEY AUTOINCREMENT,
+        //         Name TEXT NOT NULL,
+        //         TargetAmount REAL NOT NULL,
+        //         SavedAmount REAL NOT NULL,
+        //         TargetDate TEXT NOT NULL,
+        //         CompletedDate DATETIME,
+        //         UserId INT NOT NULL
+        //     );";
+        // var createGoalsSql =  @"DROP TABLE IF EXISTS Goals;";
+
+        // using var command = dbContext.Database.GetDbConnection().CreateCommand();
+        // command.CommandText = createGoalsSql;
+        // dbContext.Database.OpenConnection();
+        // command.ExecuteNonQuery();
         
-        using var command = dbContext.Database.GetDbConnection().CreateCommand();
-        command.CommandText = createGoalsSql;
-        dbContext.Database.OpenConnection();
-        command.ExecuteNonQuery();
-        
-        Console.WriteLine("[DB INITIALIZATION] Database and table structures verified successfully!");
+        // Console.WriteLine("[DB INITIALIZATION] Database and table structures verified successfully!");
     }
     catch (Exception ex)
     {
