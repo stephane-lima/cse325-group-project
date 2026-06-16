@@ -6,64 +6,69 @@ Group Members:
 - Stephanie Dacullo Selanoba
 - Pastor Zimondi
 
----
+# Budget & Expense Tracker — User Guide
 
-## Running the app locally
+This README is a concise user guide for the deployed Budget & Expense Tracker web app.
+Access the live site at: https://budget-and-expense-tracker.onrender.com
 
-```bash
-dotnet restore
-dotnet run
-```
+Quick overview
+- What it does: track income and expenses, maintain a transaction ledger, and manage savings goals.
+- Key pages: Dashboard, Transactions, Financial Goals, Account (Login / Register).
 
-Then open the URL shown in the console (e.g. `https://localhost:5001`).
+Demo account (try instantly)
+- Email: demo@budgettracker.com
+- Password: Password123!
 
----
+Using the app (web)
 
-## Login / Authentication (User Guide)
+1) Sign in
+- Visit the site and click **Log in** (top-right or from the menu).
+- Enter your email and password, then submit.
 
-The app uses cookie-based authentication.
+2) Create an account
+- From the login screen click **Create one** or open `/register`.
+- Provide a display name, valid email and a password (minimum 6 characters).
+- After successful registration you are automatically signed in.
 
-**Log in**
-1. Click **Log in** in the left navigation, or visit `/login`.
-2. Enter your email and password and press **Log in**.
-3. A demo account is provided so you can sign in immediately:
-   - **Email:** `demo@budgettracker.com`
-   - **Password:** `Password123!`
+3) Dashboard (Home)
+- The Dashboard displays Total Net Balance, Total Incomes, Total Expenses and a short list of recent transactions.
+- Two charts visualize cash flow and cumulative savings over time.
 
-**Create an account**
-1. On the login page, click **Create one** (or visit `/register`).
-2. Fill in your name, email, and password (min. 6 characters) and submit.
-3. You are signed in automatically and returned to the home page.
+4) Transactions
+- Open **Transactions** to add, view, or remove transaction entries. Use the Quick Add Transaction form to submit a transaction with:
+  - Transaction Label, Type (Income / Expense), Category, Amount and Date.
+- Transactions appear in the history table
+- Use the Remove button to delete an entry.
 
-**Log out**
-- Click **Log out** in the navigation. This clears your session and returns you to the login page.
+5) Financial Goals
+- Create savings goals with a target amount, starting saved amount, and due date.
+- Add or remove saved amounts for a goal using the input next to each goal.
+- The Current Goals and Completed Goals card display the target amount, the saved amount, the date (due/completed), and a progress bar that reflects the percent completion.
 
-**Protected pages**
-- The **Counter** page is marked `[Authorize]` as a demonstration: visiting it while
-  signed out redirects you to the login page and returns you there after you sign in.
+Account & security notes
+- The site uses cookie-based authentication. Signing out clears your session until you sign in again.
+- Passwords are stored as salted PBKDF2 hashes (server-side) 
+- The app never stores plain-text passwords.
 
----
+Troubleshooting (common issues)
+- Can't log in: verify email and password (try the demo account first). If you just registered, ensure registration succeeded and try again.
+- Page errors: refresh the page or try signing out and in again. If the error persists, contact the site administrator.
+- Missing charts: ensure your browser allows loading https://cdn.jsdelivr.net (used for Chart.js).
 
-## Notes for the team (Database Setup / User Authentication cards)
+Privacy & data
+- This app stores data in a database for each account. If you use the public demo instance, seeded demo data is available for testing and may be reset periodically.
 
-The login UI depends only on the `IAccountService` interface
-(`Services/AccountService.cs`). The current implementation, `InMemoryAccountService`,
-stores users in memory with salted **PBKDF2** password hashes and seeds the demo account.
+Support & contact
+- For questions or to report issues, open an issue in the project repository or contact the maintainers (see project metadata).
 
-To move to a real database, implement `IAccountService` against EF Core Identity
-and change **one line** in `Program.cs`:
+### Developer Notes (Code Documentation)
 
-```csharp
-builder.Services.AddSingleton<IAccountService, InMemoryAccountService>();
-// becomes, e.g.:
-// builder.Services.AddScoped<IAccountService, EfCoreAccountService>();
-```
-
-No changes to `Login.razor` / `Register.razor` are required.
-
-
-## Web application site
-https://budget-and-expense-tracker.onrender.com
+- The project includes XML-style comments on the public models and services to make generating API docs simpler.
+- Generate XML docs by adding `<GenerateDocumentationFile>true</GenerateDocumentationFile>` to the .csproj and building.
+- Key code locations:
+  - `Data/AppDbContext.cs` — EF Core context and seed data.
+  - `Services/AccountService.cs` — Registration, credential validation, and claims principal creation.
+  - `Components/Account/Register.razor` and `Components/Account/Login.razor` — Authentication UI and form bindings.
 
 
 ### 1. CRUD Implementation

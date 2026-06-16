@@ -1,4 +1,9 @@
-﻿@page "/Error"
+﻿@*
+    Error.razor
+    Purpose: Generic error UI shown when an unhandled exception occurs. Includes optional
+    request id helpful for troubleshooting in logs.
+*@
+@page "/Error"
 @using System.Diagnostics
 
 <PageTitle>Error</PageTitle>
@@ -31,6 +36,10 @@
     private string? RequestId { get; set; }
     private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
 
+    /// <summary>
+    /// Initialize the component and capture the current request id (if available)
+    /// so it can be displayed to the user for support/troubleshooting.
+    /// </summary>
     protected override void OnInitialized() =>
         RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
 }

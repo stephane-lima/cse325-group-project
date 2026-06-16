@@ -387,7 +387,7 @@ html, body {
    ========================================================================== */
 .goals-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: 1fr; /* Force one goal per row on all screen sizes */
     gap: 1.5rem;
 }
 
@@ -396,6 +396,11 @@ html, body {
     border: 1px solid #f3f4f6;
     border-radius: 10px;
     padding: 1.25rem;
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
+    width: 100%;
+    display: block;
 }
 
 .goal-meta {

@@ -4,12 +4,28 @@ using System;
 
 namespace BudgetAndExpenseTracker.Data;
 
+/// <summary>
+/// Entity Framework Core database context for the application.
+/// Exposes DbSet properties for transactions, goals, and users.
+/// </summary>
 public class AppDbContext : DbContext
 {
+    /// <summary>
+    /// Construct a new AppDbContext using the provided options.
+    /// </summary>
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+    /// <summary>
+    /// Ledger transactions table.
+    /// </summary>
     public DbSet<Transaction> Transactions { get; set; }
+    /// <summary>
+    /// Financial goals table.
+    /// </summary>
     public DbSet<Goal> Goals { get; set; }
+    /// <summary>
+    /// User accounts table.
+    /// </summary>
     public DbSet<ApplicationUser> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

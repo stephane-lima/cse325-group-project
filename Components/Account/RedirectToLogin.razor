@@ -6,6 +6,10 @@
 *@
 
 @code {
+    /// <summary>
+    /// Redirect the current unauthenticated request to the `/login` page
+    /// and include the original path as a `returnUrl` query parameter.
+    /// </summary>
     protected override void OnInitialized()
     {
         var returnUrl = Navigation.ToBaseRelativePath(Navigation.Uri);

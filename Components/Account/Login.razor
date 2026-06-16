@@ -1,4 +1,9 @@
-﻿@page "/login"
+﻿@*
+    Login.razor
+    Purpose: Sign-in form for existing users. Validates credentials via `IAccountService` and
+    signs users in using cookie authentication. Preserves an optional `returnUrl`.
+*@
+@page "/login"
 @page "/Account/Login"
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authentication
@@ -47,7 +52,7 @@
                 <label for="remember" class="form-label" style="margin: 0; text-transform: none; font-weight: 600; font-size: 0.85rem;">Keep me signed in</label>
             </div>
 
-            <button type="submit" class="btn-submit">Log in</button>
+            <button type="submit" class="btn-submit" arial-label="Log In">Log in</button>
         </EditForm>
 
         <p class="auth-switch" style="text-align: center; font-size: 0.85rem; color: #4b5563; margin-top: 1.5rem; margin-bottom: 0;">
@@ -72,11 +77,18 @@
 
     private string? _errorMessage;
 
+    /// <summary>
+    /// Initialize the login component and ensure the input model is available for binding.
+    /// </summary>
     protected override void OnInitialized()
     {
         Input ??= new();
     }
 
+    /// <summary>
+    /// Handle the login form submission. Validates credentials, signs the user in with
+    /// cookie authentication and redirects to the provided return URL (if local).
+    /// </summary>
     private async Task LogInAsync()
     {
         if (Input is null) return;
@@ -96,6 +108,10 @@
         Navigation.NavigateTo(destination, forceLoad: true);
     }
 
+    /// <summary>
+    /// Determine whether the specified URL is a local path within the application.
+    /// Prevents open-redirect vulnerabilities by allowing only local redirects.
+    /// </summary>
     private static bool IsLocalUrl(string? url) =>
         !string.IsNullOrEmpty(url) && url.StartsWith('/') && !url.StartsWith("//");
 

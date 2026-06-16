@@ -1,3 +1,8 @@
+@*
+    Goals.razor
+    Purpose: Manage user's financial goals (create, add/remove saved amounts, delete).
+    Notes: Uses data annotations for validation and protects the page with [Authorize].
+*@
 @page "/goals"
 @layout Layout.MainLayout
 @rendermode InteractiveServer
@@ -86,30 +91,30 @@
                 <EditForm Model="newGoal" OnValidSubmit="AddGoal">
                     <DataAnnotationsValidator />
                     <div class="form-group">
-                        <label class="form-label">Goal Name</label>
-                        <InputText class="form-control" @bind-Value="newGoal.Name" />
+                        <label class="form-label" for="goalName">Goal Name</label>
+                        <InputText class="form-control" id="goalName" @bind-Value="newGoal.Name" />
                         <ValidationMessage For="() => newGoal.Name" class="validation-message" />
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Target Amount</label>
-                        <InputNumber class="form-control" @bind-Value="newGoal.TargetAmount" />
+                        <label class="form-label" for="targetAmount">Target Amount</label>
+                        <InputNumber class="form-control" id="targetAmount" @bind-Value="newGoal.TargetAmount" />
                         <ValidationMessage For="() => newGoal.TargetAmount" class="validation-message" />
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Starting Saved Amount</label>
-                        <InputNumber class="form-control" @bind-Value="newGoal.SavedAmount" />
+                        <label class="form-label" for="savedAmount">Starting Saved Amount</label>
+                        <InputNumber class="form-control" id="savedAmount" @bind-Value="newGoal.SavedAmount" />
                         <ValidationMessage For="() => newGoal.SavedAmount" class="validation-message" />
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Target Date</label>
-                        <InputDate class="form-control" @bind-Value="newGoal.TargetDate" />
+                        <label class="form-label" for="targetDate">Target Date</label>
+                        <InputDate class="form-control" id="targetDate" @bind-Value="newGoal.TargetDate" />
                         <ValidationMessage For="() => newGoal.TargetDate" class="validation-message" />
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 mt-2">Add Goal</button>
+                    <button type="submit" class="btn btn-primary w-100 mt-2" aria-label="Add Goal">Add Goal</button>
                 </EditForm>
             </div>
 
@@ -128,13 +133,14 @@
                             <div class="goal-meta">
                                 <div>
                                     <div class="goal-name">@g.Name</div>
-                                    <div class="goal-numbers">Target $@g.TargetAmount.ToString("N2")</div>
-                                    <div class="goal-numbers">Completed @g.CompletedDate?.ToShortDateString()</div>
+                                    <div class="goal-numbers">Target: $@g.TargetAmount.ToString("N2")</div>
+                                    <div class="goal-numbers">Saved: $@g.SavedAmount.ToString("N2")</div>
+                                    <div class="goal-numbers">Completed: @g.CompletedDate?.ToShortDateString()</div>
                                 </div>
-                                <div style="text-align: right;">
+                                @* <div style="text-align: right;">
                                     <div class="goal-pct">Completed</div>
                                     <div class="goal-numbers">Saved $@g.SavedAmount.ToString("N2")</div>
-                                </div>
+                                </div> *@
                             </div>
 
                             <div class="progress-bar-container" style="margin: .75rem 0;">
@@ -167,12 +173,12 @@
                             <div class="goal-meta">
                                 <div>
                                     <div class="goal-name">@g.Name</div>
-                                    <div class="goal-numbers">Target $@g.TargetAmount.ToString("N2")</div>
-                                    <div class="goal-numbers">Due @g.TargetDate.ToShortDateString()</div>
+                                    <div class="goal-numbers">Target: $@g.TargetAmount.ToString("N2")</div>
+                                    <div class="goal-numbers">Due: @g.TargetDate.ToShortDateString()</div>
                                 </div>
                                 <div style="text-align: right;">
                                     <div class="goal-pct">@GetPercent(g) %</div>
-                                    <div class="goal-numbers">Saved $@g.SavedAmount.ToString("N2")</div>
+                                    <div class="goal-numbers">Saved: $@g.SavedAmount.ToString("N2")</div>
                                 </div>
                             </div>
 
@@ -180,14 +186,14 @@
                                 <div class="progress-fill" style="width: @GetPercent(g)%"></div>
                             </div>
 
-                            <div class="form-group-row" style="margin-top: .5rem; align-items: center;">
-                                <div>
+                            <div class="form-group-row d-flex flex-column flex-xl-row align-items-center" style="margin-top: .5rem;">
+                                <div class="w-100 mb-2 mb-xl-0">
                                     <input class="form-control" type="number" step="0.01" @bind="gEditAmounts[g.Id]" placeholder="Add amount" />
                                 </div>
-                                <div style="display:flex; gap:.5rem;">
-                                    <button class="btn-submit" @onclick="() => AddToSaved(g)">Add Funds</button>
-                                    <button class="btn-submit" @onclick="() => RemoveFromSaved(g)">Remove Funds</button>
-                                    <button class="btn-delete" @onclick="() => RemoveGoal(g)">🗑️</button>
+                                <div class="d-flex" style="gap:.5rem;">
+                                    <button class="btn-submit" aria-label="Add Funds" @onclick="() => AddToSaved(g)">Add Funds</button>
+                                    <button class="btn-submit" aria-label="Remove Funds" @onclick="() => RemoveFromSaved(g)">Remove Funds</button>
+                                    <button class="btn-delete" aria-label="Remove Goal" @onclick="() => RemoveGoal(g)">🗑️</button>
                                 </div>
                             </div>
                         </div>
@@ -195,39 +201,6 @@
                 </div>
             </div>
         </div>
-        @* <div class="col-md-5 mb-4">
-            <div class="card p-4 shadow-sm">
-                <h3>Completed Goals</h3>
-
-                @if (!CompletedGoals.Any())
-                {
-                    <div class="empty-text">You have no completed goals yet.</div>
-                }
-
-                <div class="goals-grid">
-                    @foreach (var g in CompletedGoals)
-                    {
-                        <div class="goal-progress-box">
-                            <div class="goal-meta">
-                                <div>
-                                    <div class="goal-name">@g.Name</div>
-                                    <div class="goal-numbers">Target $@g.TargetAmount.ToString("N2")</div>
-                                    <div class="goal-numbers">Due @g.TargetDate.ToShortDateString()</div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div class="goal-pct">@GetPercent(g) %</div>
-                                    <div class="goal-numbers">Saved $@g.SavedAmount.ToString("N2")</div>
-                                </div>
-                            </div>
-
-                            <div class="progress-bar-container" style="margin: .75rem 0;">
-                                <div class="progress-fill" style="width: @GetPercent(g)%"></div>
-                            </div>
-                        </div>
-                    }
-                </div> 
-            </div>
-        </div> *@
     </div>
 </div>
 
@@ -252,6 +225,12 @@
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
 
+    
+
+    /// <summary>
+    /// Component initialization lifecycle method. Acquires the current user id
+    /// from the authentication state and loads the user's goals.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -262,6 +241,10 @@
         await LoadGoalsAsync();
     }
 
+    /// <summary>
+    /// Load goals for the current user from the database and compute
+    /// aggregate totals used by the UI summary cards.
+    /// </summary>
     private async Task LoadGoalsAsync()
     {
         try
@@ -283,6 +266,10 @@
         }
     }
 
+    /// <summary>
+    /// Persist a new goal to the database using values from the bound
+    /// <see cref="newGoal"/> model, then refresh the list and UI.
+    /// </summary>
     private async Task AddGoal()
     {
         try
@@ -312,6 +299,10 @@
         }
     }
 
+    /// <summary>
+    /// Remove the supplied goal record from persistent storage and refresh the UI.
+    /// </summary>
+    /// <param name="g">The goal instance to delete.</param>
     private async Task RemoveGoal(Goal g)
     {
         try
@@ -331,6 +322,11 @@
         }
     }
 
+    /// <summary>
+    /// Add funds to a goal's saved amount using the value from the edit buffer
+    /// and mark the goal as completed when the target is reached.
+    /// </summary>
+    /// <param name="g">Goal to add funds to.</param>
     private async Task AddToSaved(Goal g)
     {
         try
@@ -366,6 +362,10 @@
         }
     }
 
+    /// <summary>
+    /// Subtract funds from a goal's saved amount using the value from the edit buffer.
+    /// </summary>
+    /// <param name="g">Goal to remove funds from.</param>
     private async Task RemoveFromSaved(Goal g)
     {
         try
@@ -395,6 +395,9 @@
         }
     }
 
+    /// <summary>
+    /// Compute a whole-number percent completion for the supplied goal (0-100).
+    /// </summary>
     private int GetPercent(Goal g)
     {
         if (g.TargetAmount <= 0) return 0;
@@ -402,6 +405,9 @@
         return pct;
     }
 
+    /// <summary>
+    /// Clear in-page notification messages displayed to the user.
+    /// </summary>
     private void ClearNotifications()
     {
         errorMessage = string.Empty;

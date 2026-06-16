@@ -1,4 +1,9 @@
-﻿@attribute [Authorize]
+﻿@*
+    Home.razor
+    Purpose: Dashboard overview showing totals, recent transactions and charts.
+    Behavior: Loads transaction data from the DB, computes aggregates and renders charts via JS interop.
+*@
+@attribute [Authorize]
 @page "/"
 @layout Layout.MainLayout
 @rendermode InteractiveServer
@@ -134,7 +139,7 @@
                                         </td>
                                         <td class="text-muted">@tx.Date</td>
                                         <td class="text-end pe-3">
-                                            <button type="button" class="btn btn-sm btn-link text-danger p-0 border-0" @onclick="() => DeleteTransactionAsync(tx.Id)" title="Delete Entry">
+                                            <button type="button" class="btn btn-sm btn-link text-danger p-0 border-0" aria-label="Remove Transaction" @onclick="() => DeleteTransactionAsync(tx.Id)" title="Delete Entry">
                                                 🗑️ Remove
                                             </button>
                                         </td>
@@ -165,12 +170,20 @@
         
         await RefreshDashboardDataAsync();
     }
-
+    /// <summary>
+    /// After the component renders, trigger the chart rendering logic which
+    /// uses JS interop to create Chart.js visualizations.
+    /// </summary>
+    /// <param name="firstRender">Indicates whether this is the first render pass.</param>
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await RenderChartsViaEvalAsync();
     }
 
+    /// <summary>
+    /// Query the database for the current user's transactions and compute
+    /// dashboard aggregates such as total income, expenses and recent entries.
+    /// </summary>
     private async Task RefreshDashboardDataAsync()
     {
         using var context = await DbFactory.CreateDbContextAsync();
@@ -186,6 +199,10 @@
             .ToList();
     }
 
+    /// <summary>
+    /// Build and render the Chart.js charts by emitting JS via IJSRuntime"
+    /// Serializes labels and data to JSON and evaluates the generated script.
+    /// </summary>
     private async Task RenderChartsViaEvalAsync()
     {
         try
@@ -276,6 +293,11 @@
         }
     }
 
+    /// <summary>
+    /// Delete a specific transaction by id, then refresh dashboard aggregates
+    /// and re-render the UI state.
+    /// </summary>
+    /// <param name="id">Transaction primary key.</param>
     private async Task DeleteTransactionAsync(int id)
     {
         using var context = await DbFactory.CreateDbContextAsync();

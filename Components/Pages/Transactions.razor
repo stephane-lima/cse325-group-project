@@ -1,4 +1,9 @@
-﻿@page "/transactions"
+﻿@*
+    Transactions.razor
+    Purpose: Interactive page for adding and listing transactions. Protected by [Authorize].
+    Key bindings: binds `NewTransaction` model for quick-add and displays `TransactionsList`.
+*@
+@page "/transactions"
 @attribute [Authorize]
 @rendermode InteractiveServer
 
@@ -22,40 +27,45 @@
                     <DataAnnotationsValidator />
 
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary text-uppercase">Transaction Label</label>
-                        <InputText @bind-Value="NewTransaction.Title" class="form-control" placeholder="e.g., Target Run" required />
+                        <label class="form-label small fw-bold text-secondary text-uppercase" for="transactionLabel">Transaction Label</label>
+                        <InputText id="transactionLabel" @bind-Value="NewTransaction.Title" class="form-control" placeholder="e.g., Target Run" />
+                        <ValidationMessage For="() => NewTransaction.Title" class="validation-message" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary text-uppercase">Type</label>
-                        <InputSelect @bind-Value="NewTransaction.Type" class="form-select">
+                        <label class="form-label small fw-bold text-secondary text-uppercase" for="transactionType">Type</label>
+                        <InputSelect id="transactionType" @bind-Value="NewTransaction.Type" class="form-select">
                             <option value="Expense">Expense</option>
                             <option value="Income">Income</option>
                         </InputSelect>
+                        <ValidationMessage For="() => NewTransaction.Type" class="validation-message" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary text-uppercase">Category</label>
-                        <InputSelect @bind-Value="NewTransaction.Category" class="form-select">
+                        <label class="form-label small fw-bold text-secondary text-uppercase" for="transactionCategory">Category</label>
+                        <InputSelect id="transactionCategory" @bind-Value="NewTransaction.Category" class="form-select">
                             <option value="Food / Groceries">Food / Groceries</option>
                             <option value="Utilities / Bills">Utilities / Bills</option>
                             <option value="Rent / Renting">Rent / Renting</option>
                             <option value="Salary / Paycheck">Salary / Paycheck</option>
                             <option value="Other Miscellaneous">Other Miscellaneous</option>
                         </InputSelect>
+                        <ValidationMessage For="() => NewTransaction.Category" class="validation-message" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary text-uppercase">Amount ($)</label>
-                        <InputNumber @bind-Value="NewTransaction.NumericAmount" class="form-control" min="0.01" step="0.01" required />
+                        <label class="form-label small fw-bold text-secondary text-uppercase" for="transactionAmount">Amount ($)</label>
+                        <InputNumber id="transactionAmount" @bind-Value="NewTransaction.NumericAmount" class="form-control" step="0.01" />
+                        <ValidationMessage For="() => NewTransaction.NumericAmount" class="validation-message" />
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-secondary text-uppercase">Date</label>
-                        <InputText @bind-Value="NewTransaction.Date" type="date" class="form-control" required />
+                        <label class="form-label small fw-bold text-secondary text-uppercase" for="transactionDate">Date</label>
+                        <InputText id="transactionDate" @bind-Value="NewTransaction.Date" type="date" class="form-control" />
+                        <ValidationMessage For="() => NewTransaction.Date" class="validation-message" />
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">Add Transaction Entry</button>
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm" arial-label="Add Transaction">Add Transaction Entry</button>
                 </EditForm>
             </div>
         </div>
@@ -94,10 +104,10 @@
                                         </span>
                                     </td>
                                     <td class="fw-bold @(tx.Type.ToLower() == "income" ? "text-success" : "text-danger")">
-                                        @(tx.Type.ToLower() == "income" ? "+" : "-")$@tx.NumericAmount.ToString("N2")
+                                        @(tx.Type.ToLower() == "income" ? "+" : "-")$@tx.Amount
                                     </td>
                                     <td class="text-end">
-                                        <button type="button" class="btn btn-sm btn-outline-danger px-2 py-0.5 border" @onclick="() => DeleteTransactionAsync(tx.Id)">
+                                        <button type="button" class="btn btn-sm btn-outline-danger px-2 py-0.5 border" aria-label="Remove Transaction" @onclick="() => DeleteTransactionAsync(tx.Id)">
                                             Remove
                                         </button>
                                     </td>
@@ -117,6 +127,12 @@
     private Transaction NewTransaction = new() { Type = "Expense", Category = "Food / Groceries", Date = DateTime.Now.ToString("yyyy-MM-dd") };
     @* private string? userId; *@
 
+    
+
+    /// <summary>
+    /// Called when the component is initialized. Acquires the current user's id
+    /// from the authentication state and loads their transactions.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -127,12 +143,20 @@
         await LoadTransactionsAsync();
     }
 
+    /// <summary>
+    /// Load the transactions for the current user from the database and
+    /// populate <see cref="TransactionsList"/> sorted by date descending.
+    /// </summary>
     private async Task LoadTransactionsAsync()
     {
         using var context = await DbFactory.CreateDbContextAsync();
         TransactionsList = await context.Transactions.Where(t => t.UserId == userId).OrderByDescending(t => t.Date).ToListAsync();
     }
 
+    /// <summary>
+    /// Handle form submission for adding a new transaction. Persists the new
+    /// transaction to the database and reloads the transaction list.
+    /// </summary>
     private async Task HandleValidSubmitAsync()
     {
         NewTransaction.UserId = userId!;
@@ -145,6 +169,11 @@
         await LoadTransactionsAsync();
     }
 
+    /// <summary>
+    /// Delete the transaction with the specified id from the database and
+    /// refresh the transaction list.
+    /// </summary>
+    /// <param name="id">Primary key of the transaction to remove.</param>
     private async Task DeleteTransactionAsync(int id)
     {
         using var context = await DbFactory.CreateDbContextAsync();
