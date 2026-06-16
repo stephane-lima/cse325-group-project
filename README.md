@@ -9,7 +9,7 @@ Group Members:
 # Budget & Expense Tracker — User Guide
 
 This README is a concise user guide for the deployed Budget & Expense Tracker web app.
-Access the live site at: https://budget-and-expense-tracker.onrender.com
+Access the live site at: https://cse325-group-project.onrender.com/
 
 Quick overview
 - What it does: track income and expenses, maintain a transaction ledger, and manage savings goals.
