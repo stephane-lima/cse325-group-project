@@ -12,7 +12,15 @@
     /// </summary>
     protected override void OnInitialized()
     {
-        var returnUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
-        Navigation.NavigateTo($"login?returnUrl=/{Uri.EscapeDataString(returnUrl)}", forceLoad: true);
+        try
+        {
+            var returnUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+            Navigation.NavigateTo($"login?returnUrl=/{Uri.EscapeDataString(returnUrl)}", forceLoad: true);
+        }
+        catch (Exception)
+        {
+            // Fallback: navigate to login without returnUrl
+            Navigation.NavigateTo("/login", forceLoad: true);
+        }
     }
 }

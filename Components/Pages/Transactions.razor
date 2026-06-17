@@ -14,8 +14,12 @@
 
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@using Microsoft.Extensions.Logging
+@inject ILogger<Transactions> Logger
 
 <PageTitle>Manage Transactions</PageTitle>
+
+<Alert Message="@_errorMessage" Type="error" Visible="@(!string.IsNullOrEmpty(_errorMessage))" OnClose="@(()=> _errorMessage = null)" />
 
 <div class="container mt-2">
     <div class="row">
@@ -55,7 +59,7 @@
 
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-secondary text-uppercase" for="transactionAmount">Amount ($)</label>
-                        <InputNumber id="transactionAmount" @bind-Value="NewTransaction.NumericAmount" class="form-control" step="0.01" />
+                        <InputNumber id="transactionAmount" @bind-Value="NewTransaction.NumericAmount" class="form-control" step="0.01" ParsingErrorMessage="Please enter a valid monetary amount."/>
                         <ValidationMessage For="() => NewTransaction.NumericAmount" class="validation-message" />
                     </div>
 
@@ -124,6 +128,7 @@
 @code {
     private List<Transaction> TransactionsList = new();
     private string? userId;
+    private string? _errorMessage;
     private Transaction NewTransaction = new() { Type = "Expense", Category = "Food / Groceries", Date = DateTime.Now.ToString("yyyy-MM-dd") };
     @* private string? userId; *@
 
@@ -135,12 +140,20 @@
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        userId = authState.User
-            .FindFirst(ClaimTypes.NameIdentifier)?
-            .Value;
-        
-        await LoadTransactionsAsync();
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            userId = authState.User
+                .FindFirst(ClaimTypes.NameIdentifier)?
+                .Value;
+
+            await LoadTransactionsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Failed to initialize Transactions page");
+            _errorMessage = "Failed to load transactions. Please try again later.";
+        }
     }
 
     /// <summary>
@@ -149,8 +162,17 @@
     /// </summary>
     private async Task LoadTransactionsAsync()
     {
-        using var context = await DbFactory.CreateDbContextAsync();
-        TransactionsList = await context.Transactions.Where(t => t.UserId == userId).OrderByDescending(t => t.Date).ToListAsync();
+        try
+        {
+            using var context = await DbFactory.CreateDbContextAsync();
+            TransactionsList = await context.Transactions.Where(t => t.UserId == userId).OrderByDescending(t => t.Date).ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Failed to load transactions for user {UserId}", userId);
+            _errorMessage = "Unable to retrieve transactions from storage.";
+            TransactionsList = new();
+        }
     }
 
     /// <summary>
@@ -159,14 +181,22 @@
     /// </summary>
     private async Task HandleValidSubmitAsync()
     {
-        NewTransaction.UserId = userId!;
-        using var context = await DbFactory.CreateDbContextAsync();
-        context.Transactions.Add(NewTransaction);
-        await context.SaveChangesAsync();
-        
-        // Reset state object
-        NewTransaction = new() { Type = "Expense", Category = "Food / Groceries", Date = DateTime.Now.ToString("yyyy-MM-dd"), UserId = userId! };
-        await LoadTransactionsAsync();
+        try
+        {
+            NewTransaction.UserId = userId!;
+            using var context = await DbFactory.CreateDbContextAsync();
+            context.Transactions.Add(NewTransaction);
+            await context.SaveChangesAsync();
+
+            // Reset state object
+            NewTransaction = new() { Type = "Expense", Category = "Food / Groceries", Date = DateTime.Now.ToString("yyyy-MM-dd"), UserId = userId! };
+            await LoadTransactionsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Failed to add transaction for user {UserId}", userId);
+            _errorMessage = "Failed to save the transaction. Please try again.";
+        }
     }
 
     /// <summary>
@@ -176,13 +206,21 @@
     /// <param name="id">Primary key of the transaction to remove.</param>
     private async Task DeleteTransactionAsync(int id)
     {
-        using var context = await DbFactory.CreateDbContextAsync();
-        var item = await context.Transactions.FindAsync(id);
-        if (item != null)
+        try
         {
-            context.Transactions.Remove(item);
-            await context.SaveChangesAsync();
-            await LoadTransactionsAsync();
+            using var context = await DbFactory.CreateDbContextAsync();
+            var item = await context.Transactions.FindAsync(id);
+            if (item != null)
+            {
+                context.Transactions.Remove(item);
+                await context.SaveChangesAsync();
+                await LoadTransactionsAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Failed to delete transaction {TransactionId} for user {UserId}", id, userId);
+            _errorMessage = "Unable to remove the transaction. Please try again.";
         }
     }
 }

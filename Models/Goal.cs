@@ -24,7 +24,7 @@ public class Goal
     /// Target monetary amount to reach for this goal.
     /// Stored as a decimal column in the database.
     /// </summary>
-    [Required]
+    [Required(ErrorMessage = "The Target Amount field is required.")]
     [Range(0, double.MaxValue, ErrorMessage = "Enter a positive target amount")]
     [Column(TypeName = "decimal(18,2)")]
     public decimal TargetAmount { get; set; } = 100m;
@@ -32,7 +32,7 @@ public class Goal
     /// <summary>
     /// The amount the user has saved so far toward the goal.
     /// </summary>
-    [Required]
+    [Required(ErrorMessage = "The Starting Saved Amount field is required.")]
     [Range(0.01, double.MaxValue, ErrorMessage = "Enter a positive target amount")]
     [Column(TypeName = "decimal(18,2)")]
     public decimal SavedAmount { get; set; } = 0.01m;
@@ -40,7 +40,7 @@ public class Goal
     /// <summary>
     /// The date by which the user expects to reach the target amount.
     /// </summary>
-    [Required]
+    [Required(ErrorMessage = "The Target Date field must be a date.")]
     public DateTime TargetDate { get; set; } = DateTime.Today.AddMonths(1);
 
     /// <summary>

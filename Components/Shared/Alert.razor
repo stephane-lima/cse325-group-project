@@ -1,0 +1,37 @@
+@using Microsoft.AspNetCore.Components
+
+@if (Visible && !string.IsNullOrEmpty(Message))
+{
+    <div class="app-alert @TypeClass" role="alert">
+        <div class="app-alert__message">@Message</div>
+        @if (Dismissible)
+        {
+            <button class="app-alert__close" @onclick="HandleClose" aria-label="Dismiss">×</button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string? Message { get; set; }
+
+    [Parameter]
+    public string Type { get; set; } = "info"; // info | success | error
+
+    [Parameter]
+    public bool Visible { get; set; } = true;
+
+    [Parameter]
+    public bool Dismissible { get; set; } = true;
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    private string TypeClass => Type?.ToLower() == "success" ? "app-alert--success" : Type?.ToLower() == "error" ? "app-alert--error" : "app-alert--info";
+
+    private Task HandleClose()
+    {
+        if (OnClose.HasDelegate) return OnClose.InvokeAsync(null);
+        return Task.CompletedTask;
+    }
+}

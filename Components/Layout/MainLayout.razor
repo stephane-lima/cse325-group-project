@@ -60,15 +60,20 @@
                         </div>
                     </Authorized>
                 </AuthorizeView>
-                <span class="text-muted ms-2" style="cursor: pointer;" title="Notifications">🔔</span>
+                @* <span class="text-muted ms-2" style="cursor: pointer;" title="Notifications">🔔</span> *@
             </div>
         </div>
 
         <article class="content flex-grow-1">
+            <Alert Message="@_layoutError" Type="error" Visible="@(!string.IsNullOrEmpty(_layoutError))" OnClose="@(()=> _layoutError = null)" />
             @Body
         </article>
     </main>
 </div>
+
+@code {
+    private string? _layoutError;
+}
 
 <style>
     .page {

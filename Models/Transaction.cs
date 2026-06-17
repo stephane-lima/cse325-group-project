@@ -37,7 +37,7 @@ public class Transaction
     /// <summary>
     /// Formatted amount string (e.g. "12.34"). Prefer <see cref="NumericAmount"/> in code.
     /// </summary>
-    [Required]
+    [Required(ErrorMessage = "The Amount field is required.")]
     [Range(0.01, double.MaxValue, ErrorMessage = "Enter a positive target amount")]
     [Column(TypeName = "decimal(18,2)")]
     public string Amount { get; set; } = "0.00";
@@ -45,7 +45,7 @@ public class Transaction
     /// <summary>
     /// Date stored as yyyy-MM-dd string for simple binding with the UI.
     /// </summary>
-    [Required]
+    [Required(ErrorMessage="Please enter a valid date.")]
     public string Date { get; set; } = DateTime.Today.ToString("yyyy-MM-dd");
 
     /// <summary>

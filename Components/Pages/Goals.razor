@@ -97,20 +97,20 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="targetAmount">Target Amount</label>
-                        <InputNumber class="form-control" id="targetAmount" @bind-Value="newGoal.TargetAmount" />
+                        <label class="form-label" for="targetAmount">Target Amount ($)</label>
+                        <InputNumber class="form-control" id="targetAmount" @bind-Value="newGoal.TargetAmount" ParsingErrorMessage="Please enter a valid monetary amount." />
                         <ValidationMessage For="() => newGoal.TargetAmount" class="validation-message" />
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="savedAmount">Starting Saved Amount</label>
-                        <InputNumber class="form-control" id="savedAmount" @bind-Value="newGoal.SavedAmount" />
+                        <label class="form-label" for="savedAmount">Starting Saved Amount ($)</label>
+                        <InputNumber class="form-control" id="savedAmount" @bind-Value="newGoal.SavedAmount" ParsingErrorMessage="Please enter a valid monetary amount." />
                         <ValidationMessage For="() => newGoal.SavedAmount" class="validation-message" />
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="targetDate">Target Date</label>
-                        <InputDate class="form-control" id="targetDate" @bind-Value="newGoal.TargetDate" />
+                        <InputDate class="form-control" id="targetDate" @bind-Value="newGoal.TargetDate" ParsingErrorMessage="Please enter a valid date." />
                         <ValidationMessage For="() => newGoal.TargetDate" class="validation-message" />
                     </div>
 

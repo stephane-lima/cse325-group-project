@@ -23,32 +23,27 @@
             <p class="auth-card__subtitle" style="font-size: 0.9rem; color: #6b7280; margin: 0;">Log in to manage your budget and expenses.</p>
         </header>
 
-        @if (!string.IsNullOrEmpty(_errorMessage))
-        {
-            <div class="auth-alert" role="alert" style="background-color: #fee2e2; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center;">
-                @_errorMessage
-            </div>
-        }
+        <Alert Message="@_errorMessage" Type="error" Visible="@(!string.IsNullOrEmpty(_errorMessage))" OnClose="@(()=> _errorMessage = null)" />
 
         <EditForm Model="Input" method="post" OnValidSubmit="LogInAsync" FormName="loginForm" novalidate>
             <DataAnnotationsValidator />
 
             <div class="auth-field" style="margin-bottom: 1.25rem;">
                 <label for="email" class="form-label">Email</label>
-                <InputText id="email" class="form-control" @bind-Value="Input.Email"
+                <InputText id="email" class="form-control" @bind-Value="Input!.Email"
                            autocomplete="username" aria-required="true" placeholder="you@example.com" />
                 <ValidationMessage For="() => Input.Email" class="validation-message" />
             </div>
 
             <div class="auth-field" style="margin-bottom: 1.25rem;">
                 <label for="password" class="form-label">Password</label>
-                <InputText id="password" type="password" class="form-control" @bind-Value="Input.Password"
+                <InputText id="password" type="password" class="form-control" @bind-Value="Input!.Password"
                            autocomplete="current-password" aria-required="true" placeholder="Enter your password" />
                 <ValidationMessage For="() => Input.Password" class="validation-message" />
             </div>
 
             <div class="auth-field auth-field--checkbox" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                <InputCheckbox id="remember" class="auth-checkbox" @bind-Value="Input.RememberMe" style="width: 16px; height: 16px; accent-color: #10b981;" />
+                <InputCheckbox id="remember" class="auth-checkbox" @bind-Value="Input!.RememberMe" style="width: 16px; height: 16px; accent-color: #10b981;" />
                 <label for="remember" class="form-label" style="margin: 0; text-transform: none; font-weight: 600; font-size: 0.85rem;">Keep me signed in</label>
             </div>
 
@@ -93,15 +88,14 @@
     {
         if (Input is null) return;
 
-        var user = await AccountService.ValidateCredentialsAsync(Input.Email, Input.Password);
+        var user = await AccountService.ValidateCredentialsAsync(Input!.Email, Input!.Password);
         if (user is null)
         {
             _errorMessage = "Invalid email or password. Please try again.";
             return;
         }
-
         var principal = AccountService.BuildPrincipal(user);
-        var properties = new AuthenticationProperties { IsPersistent = Input.RememberMe };
+        var properties = new AuthenticationProperties { IsPersistent = Input!.RememberMe };
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, properties);
 
         var destination = IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";

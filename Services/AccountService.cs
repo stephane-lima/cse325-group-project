@@ -5,6 +5,7 @@ using BudgetAndExpenseTracker.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using BudgetAndExpenseTracker.Data;
+using Microsoft.Extensions.Logging;
 
 namespace BudgetAndExpenseTracker.Services;
 
@@ -50,9 +51,12 @@ public sealed class AccountService : IAccountService
     private const int Iterations = 100_000;   
     private static readonly HashAlgorithmName Algorithm = HashAlgorithmName.SHA256;
 
-    public AccountService(IDbContextFactory<AppDbContext> dbFactory)
+    private readonly ILogger<AccountService> _logger;
+
+    public AccountService(IDbContextFactory<AppDbContext> dbFactory, ILogger<AccountService> logger)
     {
         _dbFactory = dbFactory;
+        _logger = logger;
     }
 
     /// <summary>
@@ -63,19 +67,27 @@ public sealed class AccountService : IAccountService
     /// <param name="password">Submitted plain-text password.</param>
     public async Task<ApplicationUser?> ValidateCredentialsAsync(string email, string password)
     {
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-            return null;
-
-        using var db = await _dbFactory.CreateDbContextAsync();
-
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.Trim().ToLower());
-
-        if (user == null)
+        try
         {
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                return null;
+
+            using var db = await _dbFactory.CreateDbContextAsync();
+
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.Trim().ToLower());
+
+            if (user == null)
+            {
+                return null;
+            }
+
+            return VerifyHash(password, user.PasswordHash) ? user : null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating credentials for {Email}", email);
             return null;
         }
-
-        return VerifyHash(password, user.PasswordHash) ? user : null;
     }
 
 
@@ -88,32 +100,45 @@ public sealed class AccountService : IAccountService
     /// <param name="password">Plain-text password (will be hashed before storage).</param>
     public async Task<(bool Success, string? Error)> RegisterAsync(string email, string displayName, string password)
     {
-        if (string.IsNullOrWhiteSpace(email))
-            return (false, "Email is required.");
-        if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
-            return (false, "Password must be at least 6 characters.");
-
-        using var db = await _dbFactory.CreateDbContextAsync();
-
-        var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.Trim().ToLower());
-
-        if (existingUser != null)
+        try
         {
-            return (false, "An account with that email already exists.");
+            if (string.IsNullOrWhiteSpace(email))
+                return (false, "Email is required.");
+            if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
+                return (false, "Password must be at least 6 characters.");
+
+            using var db = await _dbFactory.CreateDbContextAsync();
+
+            var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.Trim().ToLower());
+
+            if (existingUser != null)
+            {
+                return (false, "An account with that email already exists.");
+            }
+
+            var user = new ApplicationUser
+            {
+                Email = email.Trim(),
+                DisplayName = string.IsNullOrWhiteSpace(displayName) ? email.Trim() : displayName.Trim(),
+                PasswordHash = HashPassword(password)
+            };
+
+            db.Users.Add(user);
+
+            await db.SaveChangesAsync();
+
+            return (true, null);
         }
-
-        var user = new ApplicationUser
+        catch (DbUpdateException dbEx)
         {
-            Email = email.Trim(),
-            DisplayName = string.IsNullOrWhiteSpace(displayName) ? email.Trim() : displayName.Trim(),
-            PasswordHash = HashPassword(password)
-        };
-
-        db.Users.Add(user);
-
-        await db.SaveChangesAsync();
-
-        return (true, null);
+            _logger.LogError(dbEx, "Database error while registering user {Email}", email);
+            return (false, "A database error occurred while creating the account. Please try again later.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while registering user {Email}", email);
+            return (false, "An unexpected error occurred. Please try again later.");
+        }
     }
 
 

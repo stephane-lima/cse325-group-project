@@ -16,8 +16,12 @@
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject IJSRuntime JS
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@using Microsoft.Extensions.Logging
+@inject ILogger<Home> Logger
 
 <PageTitle>Dashboard - Budget & Expense Tracker</PageTitle>
+
+<Alert Message="@_errorMessage" Type="error" Visible="@(!string.IsNullOrEmpty(_errorMessage))" OnClose="@(()=> _errorMessage = null)" />
 
 @* FIX #5: chart.js <script> tag removed from here — moved to App.razor.
    Script tags inside interactive components do not run on client-side
@@ -135,7 +139,7 @@
                                             </span>
                                         </td>
                                         <td class="@(tx.Type.ToLower() == "income" ? "text-success" : "text-danger") fw-bold">
-                                            @(tx.Type.ToLower() == "income" ? "+" : "-")$@tx.NumericAmount.ToString("N2")
+                                            @(tx.Type.ToLower() == "income" ? "+" : "-")$@tx.Amount
                                         </td>
                                         <td class="text-muted">@tx.Date</td>
                                         <td class="text-end pe-3">
@@ -160,15 +164,24 @@
     private decimal TotalIncome;
     private decimal TotalExpenses;
     private string? userId;
+    private string? _errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        userId = authState.User
-            .FindFirst(ClaimTypes.NameIdentifier)?
-            .Value;
-        
-        await RefreshDashboardDataAsync();
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            userId = authState.User
+                .FindFirst(ClaimTypes.NameIdentifier)?
+                .Value;
+
+            await RefreshDashboardDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Failed to initialize dashboard");
+            _errorMessage = "Failed to load dashboard data. Please try again later.";
+        }
     }
     /// <summary>
     /// After the component renders, trigger the chart rendering logic which
@@ -186,17 +199,26 @@
     /// </summary>
     private async Task RefreshDashboardDataAsync()
     {
-        using var context = await DbFactory.CreateDbContextAsync();
-        var all = await context.Transactions.Where(t => t.UserId == userId).ToListAsync();
+        try
+        {
+            using var context = await DbFactory.CreateDbContextAsync();
+            var all = await context.Transactions.Where(t => t.UserId == userId).ToListAsync();
 
-        TotalIncome = all.Where(t => t.Type.ToLower() == "income").Sum(t => t.NumericAmount);
-        TotalExpenses = all.Where(t => t.Type.ToLower() == "expense").Sum(t => t.NumericAmount);
-        TotalBalance = 0.00m + TotalIncome - TotalExpenses;
+            TotalIncome = all.Where(t => t.Type.ToLower() == "income").Sum(t => decimal.TryParse(t.Amount, out decimal amount) ? amount : 0.00m);
+            TotalExpenses = all.Where(t => t.Type.ToLower() == "expense").Sum(t => decimal.TryParse(t.Amount, out decimal amount) ? amount : 0.00m);
+            TotalBalance = 0.00m + TotalIncome - TotalExpenses;
 
-        RecentTransactions = all
-            .OrderByDescending(t => t.Date)
-            .Take(5)
-            .ToList();
+            RecentTransactions = all
+                .OrderByDescending(t => t.Date)
+                .Take(5)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Failed to refresh dashboard data for user {UserId}", userId);
+            _errorMessage = "Could not retrieve dashboard data.";
+            RecentTransactions = new();
+        }
     }
 
     /// <summary>
@@ -289,7 +311,8 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[CHART ENGINE ERROR] Failed execution runtime sequence: {ex.Message}");
+            Logger?.LogError(ex, "Chart rendering failed for user {UserId}", userId);
+            _errorMessage = "Failed to render charts.";
         }
     }
 
@@ -300,14 +323,22 @@
     /// <param name="id">Transaction primary key.</param>
     private async Task DeleteTransactionAsync(int id)
     {
-        using var context = await DbFactory.CreateDbContextAsync();
-        var item = await context.Transactions.FindAsync(id);
-        if (item != null)
+        try
         {
-            context.Transactions.Remove(item);
-            await context.SaveChangesAsync();
-            await RefreshDashboardDataAsync();
-            StateHasChanged();
+            using var context = await DbFactory.CreateDbContextAsync();
+            var item = await context.Transactions.FindAsync(id);
+            if (item != null)
+            {
+                context.Transactions.Remove(item);
+                await context.SaveChangesAsync();
+                await RefreshDashboardDataAsync();
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Failed to delete transaction {TransactionId} on dashboard for user {UserId}", id, userId);
+            _errorMessage = "Unable to delete transaction from dashboard.";
         }
     }
 }

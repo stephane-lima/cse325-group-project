@@ -23,37 +23,32 @@
             <p class="auth-card__subtitle" style="font-size: 0.9rem; color: #6b7280; margin: 0;">Start tracking your budget in minutes.</p>
         </header>
 
-        @if (!string.IsNullOrEmpty(_errorMessage))
-        {
-            <div class="auth-alert" role="alert" style="background-color: #fee2e2; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center;">
-                @_errorMessage
-            </div>
-        }
+        <Alert Message="@_errorMessage" Type="error" Visible="@(!string.IsNullOrEmpty(_errorMessage))" OnClose="@(()=> _errorMessage = null)" />
 
         <EditForm Model="Input" method="post" OnValidSubmit="RegisterAsync" FormName="registerForm" novalidate>
             <DataAnnotationsValidator />
 
             <div class="auth-field" style="margin-bottom: 1.25rem;">
                 <label for="name" class="form-label">Display name</label>
-                <InputText id="name" class="form-control" @bind-Value="Input.DisplayName" autocomplete="name" placeholder="Jane Doe" />
+                <InputText id="name" class="form-control" @bind-Value="Input!.DisplayName" autocomplete="name" placeholder="Jane Doe" />
                 <ValidationMessage For="() => Input.DisplayName" class="validation-message" />
             </div>
 
             <div class="auth-field" style="margin-bottom: 1.25rem;">
                 <label for="email" class="form-label">Email</label>
-                <InputText id="email" class="form-control" @bind-Value="Input.Email" autocomplete="username" aria-required="true" placeholder="you@example.com" />
+                <InputText id="email" class="form-control" @bind-Value="Input!.Email" autocomplete="username" aria-required="true" placeholder="you@example.com" />
                 <ValidationMessage For="() => Input.Email" class="validation-message" />
             </div>
 
             <div class="auth-field" style="margin-bottom: 1.25rem;">
                 <label for="password" class="form-label">Password</label>
-                <InputText id="password" type="password" class="form-control" @bind-Value="Input.Password" autocomplete="new-password" aria-required="true" placeholder="At least 6 characters" />
+                <InputText id="password" type="password" class="form-control" @bind-Value="Input!.Password" autocomplete="new-password" aria-required="true" placeholder="At least 6 characters" />
                 <ValidationMessage For="() => Input.Password" class="validation-message" />
             </div>
 
             <div class="auth-field" style="margin-bottom: 1.5rem;">
                 <label for="confirm" class="form-label">Confirm password</label>
-                <InputText id="confirm" type="password" class="form-control" @bind-Value="Input.ConfirmPassword" autocomplete="new-password" aria-required="true" placeholder="Re-enter your password" />
+                <InputText id="confirm" type="password" class="form-control" @bind-Value="Input!.ConfirmPassword" autocomplete="new-password" aria-required="true" placeholder="Re-enter your password" />
                 <ValidationMessage For="() => Input.ConfirmPassword" class="validation-message" />
             </div>
 
@@ -90,14 +85,19 @@
     {
         if (Input is null) return;
 
-        (bool success, string? error) = await AccountService.RegisterAsync(Input.Email, Input.DisplayName, Input.Password);
+        (bool success, string? error) = await AccountService.RegisterAsync(Input!.Email, Input!.DisplayName, Input!.Password);
         if (!success)
         {
             _errorMessage = error;
             return;
         }
+        var user = await AccountService.ValidateCredentialsAsync(Input!.Email, Input!.Password);
+        if (user is null)
+        {
+            _errorMessage = "Account created but automatic sign-in failed. Please sign in manually.";
+            return;
+        }
 
-        var user = await AccountService.ValidateCredentialsAsync(Input.Email, Input.Password)!;
         var principal = AccountService.BuildPrincipal(user);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
