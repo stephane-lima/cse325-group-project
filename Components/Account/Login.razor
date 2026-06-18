@@ -23,7 +23,14 @@
             <p class="auth-card__subtitle" style="font-size: 0.9rem; color: #6b7280; margin: 0;">Log in to manage your budget and expenses.</p>
         </header>
 
-        <Alert Message="@_errorMessage" Type="error" Visible="@(!string.IsNullOrEmpty(_errorMessage))" OnClose="@(()=> _errorMessage = null)" />
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="auth-alert" role="alert" style="background-color: #fee2e2; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center;">
+                @_errorMessage
+            </div>
+        }
+
+        @* <Alert Message="@_errorMessage" Type="error" Visible="@(!string.IsNullOrEmpty(_errorMessage))" OnClose="@(()=> _errorMessage = null)" /> *@
 
         <EditForm Model="Input" method="post" OnValidSubmit="LogInAsync" FormName="loginForm" novalidate>
             <DataAnnotationsValidator />
